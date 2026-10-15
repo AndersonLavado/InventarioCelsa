@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <base target="_top">
+  <title>CELSA - Recorrido diario C. Calidad</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --celsa-red: #E30613;
+      --celsa-dark: #1A1A1A;
+      --celsa-light-gray: #F5F5F7;
+      --celsa-border: #D1D1D6;
+      --celsa-blue: #0066B3;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
+    body { background: var(--celsa-light-gray); color: var(--celsa-dark);
+      display: flex; justify-content: center; align-items: flex-start;
+      min-height: 100vh; padding: 20px 0; }
+    .mobile-container { width: 100%; max-width: 720px; background: #FFF;
+      display: flex; flex-direction: column; box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+      border-radius: 12px; overflow: visible; }
+    header { border-top: 4px solid var(--celsa-red); padding: 15px 20px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: #FFF; border-bottom: 1px solid var(--celsa-border);
+      border-top-left-radius: 8px; border-top-right-radius: 8px;
+      position: sticky; top: 0; z-index: 100; }
+    .logo-block { display: inline-block; }
+    .logo-box {
+      background: var(--celsa-red); color: #FFF;
+      font-weight: 900; font-size: 20px; letter-spacing: 2px;
+      padding: 4px 8px; border-radius: 3px;
+      display: block; text-align: center;
+      width: 100%; box-sizing: border-box;
+    }
+    .logo-sub {
+      font-size: 8px; font-weight: bold; color: #000;
+      text-transform: uppercase; margin-top: 3px;
+      letter-spacing: 0.5px; text-align: center;
+      display: block; white-space: nowrap;
+    }
+    .app-title { font-size: 13px; color: #666; font-weight: 600;
+      max-width: 200px; text-align: right; }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .btn-back { background: none; border: none; font-size: 20px;
+      color: var(--celsa-red); cursor: pointer; padding: 4px 8px;
+      border-radius: 6px; transition: background 0.2s; display: none; }
+    .btn-back:hover { background: #FFF0F0; }
+    .btn-back.visible { display: block; }
+
+    main { padding: 20px; flex: 1 0 auto; }
+    h2 { font-size: 18px; font-weight: 700; margin-bottom: 6px;
+      border-left: 4px solid var(--celsa-red); padding-left: 10px; }
+    .corr-pill { display: inline-flex; align-items: center; gap: 6px;
+      background: #E8F4FD; border: 1px solid #90caf9;
+      border-radius: 20px; padding: 4px 12px;
+      font-size: 11px; font-weight: 700; color: var(--celsa-blue);
+      margin-bottom: 20px; }
+    .corr-dot { width: 7px; height: 7px; border-radius: 50%;
+      background: var(--celsa-blue); animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50%     { opacity: 0.35; transform: scale(0.65); } }
+
+    /* ---- VENTANA DE RANGO ---- */
+    .rango-screen { display: flex; flex-direction: column; gap: 16px;
+      padding: 10px 0; }
+    .rango-screen h2 { margin-bottom: 0; }
+    .rango-desc { font-size: 13px; color: #666; line-height: 1.5; }
+    .rango-row { display: flex; gap: 14px; align-items: flex-end;
+      flex-wrap: wrap; }
+    .rango-row .form-group { flex: 1; min-width: 120px; }
+    .rango-info { background: #E8F4FD; border: 1px solid #90caf9;
+      border-radius: 10px; padding: 12px 16px; font-size: 13px;
+      color: var(--celsa-blue); font-weight: 600; display: flex;
+      align-items: center; gap: 8px; }
+    .rango-info i { font-size: 16px; }
+    .rango-info.error { background: #FFF5F5; border-color: #E30613;
+      color: var(--celsa-red); }
+
+    /* ---- FORMULARIO ---- */
+    .form-screen { display: none; }
+    .form-screen.visible { display: block; }
+
+    .frame-container { margin-bottom: 18px;
+      border: 2px solid var(--celsa-border); border-radius: 12px;
+      overflow: hidden; background: #FFF; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); } }
+    .frame-header { color: #FFF; padding: 12px 18px;
+      font-weight: 700; font-size: 14px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: linear-gradient(135deg, #E30613 0%, #8B0000 100%); }
+    .frame-header .left { display: flex; align-items: center; gap: 10px; }
+    .btn-remove { background: rgba(255,255,255,0.18);
+      border: 1px solid rgba(255,255,255,0.4); color: #FFF;
+      border-radius: 6px; padding: 4px 10px; font-size: 12px;
+      font-weight: 700; cursor: pointer; display: flex;
+      align-items: center; gap: 5px; transition: background 0.2s; }
+    .btn-remove:hover { background: rgba(255,255,255,0.35); }
+    .frame-content { padding: 18px; background: #FAFAFA; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-group.full { grid-column: span 2; }
+    .form-group label { font-size: 11px; font-weight: 700; color: #666;
+      text-transform: uppercase; letter-spacing: 0.5px; }
+    .form-group input, .form-group select { padding: 10px 12px;
+      border: 2px solid var(--celsa-border); border-radius: 8px;
+      font-size: 14px; font-family: inherit;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      background: #FFF; color: var(--celsa-dark); width: 100%; }
+    .form-group input:focus, .form-group select:focus { outline: none;
+      border-color: var(--celsa-red);
+      box-shadow: 0 0 0 3px rgba(227,6,19,0.12); }
+    .form-group input[readonly] { background: #F0F0F2; color: #555; cursor: not-allowed; }
+    .form-group input.ok    { border-color: #00B894; background: #F1FBF7; }
+    .form-group input.error { border-color: var(--celsa-red); background: #FFF5F5; }
+    .status-msg { font-size: 11px; font-weight: 600; margin-top: 3px; display: none; }
+    .status-msg.ok    { color: #00B894; display: block; }
+    .status-msg.error { color: var(--celsa-red); display: block; }
+
+    /* ---- PESOS EN UNA FILA ---- */
+    .pesos-row { grid-column: span 2; display: grid;
+      grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+    /* ---- CAMPOS OCULTOS (Peso Cu / Peso Al) ---- */
+    .pesos-cu-al-hidden { display: none !important; }
+
+    /* ---- CAMPOS OCULTABLES SEGÚN TIPO ---- */
+    .campo-ocultable { display: flex; }
+    .campo-ocultable.hidden { display: none !important; }
+
+    .btn-add { width: 100%; padding: 14px;
+      background: #FFF; color: var(--celsa-red);
+      border: 2px dashed var(--celsa-red); border-radius: 10px;
+      font-size: 14px; font-weight: 700; font-family: inherit;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      gap: 8px; transition: all 0.2s; margin-top: 8px; }
+    .btn-add:hover { background: #FFF0F0; border-style: solid; }
+    .btn-add:disabled { opacity: 0.5; cursor: not-allowed;
+      border-style: dashed; background: #FFF; }
+    .actions-bar { display: flex; gap: 12px; margin-top: 20px;
+      padding-top: 20px; border-top: 2px dashed var(--celsa-border); }
+    .btn { flex: 1; padding: 14px; border: none; border-radius: 10px;
+      font-size: 14px; font-weight: 700; font-family: inherit;
+      cursor: pointer; display: flex; align-items: center;
+      justify-content: center; gap: 8px; transition: all 0.2s; }
+    .btn-primary { background: var(--celsa-red); color: #FFF;
+      box-shadow: 0 4px 10px rgba(227,6,19,0.25); }
+    .btn-primary:hover { background: #b8000f; }
+    .btn-primary:disabled { background: #999; box-shadow: none; cursor: not-allowed; }
+
+    .toast { position: fixed; top: 20px; left: 50%;
+      transform: translateX(-50%) translateY(-100px);
+      background: var(--celsa-dark); color: #FFF;
+      padding: 14px 22px; border-radius: 10px;
+      font-size: 13px; font-weight: 600;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+      z-index: 9999; opacity: 0;
+      transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+      max-width: 90%; text-align: center; }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .toast.success { background: #00B894; }
+    .toast.error   { background: var(--celsa-red); }
+    .loading-overlay { position: fixed; inset: 0;
+      background: rgba(255,255,255,0.85);
+      display: none; align-items: center; justify-content: center;
+      flex-direction: column; gap: 15px; z-index: 9998; }
+    .loading-overlay.show { display: flex; }
+    .spinner { width: 48px; height: 48px;
+      border: 4px solid var(--celsa-border);
+      border-top-color: var(--celsa-red); border-radius: 50%;
+      animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-overlay p { font-weight: 700; color: #555; font-size: 14px; }
+    .modal-overlay { position: fixed; inset: 0;
+      background: rgba(0,0,0,0.55); display: none;
+      align-items: center; justify-content: center;
+      z-index: 9999; padding: 20px; }
+    .modal-overlay.show { display: flex; }
+    .modal-box { background: #FFF; border-radius: 14px;
+      max-width: 420px; width: 100%;
+      padding: 26px 24px; text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+      animation: fadeIn 0.3s ease; }
+    .modal-box .icon-ok { width: 64px; height: 64px; border-radius: 50%;
+      background: #E8F8F2; display: flex; align-items: center;
+      justify-content: center; margin: 0 auto 14px; }
+    .modal-box .icon-ok i { font-size: 30px; color: #00B894; }
+    .modal-box h3 { font-size: 17px; margin-bottom: 8px; }
+    .modal-box p { font-size: 13px; color: #666; margin-bottom: 18px; }
+    .modal-box .btns { display: flex; gap: 10px; }
+    .modal-box .btns button { flex: 1; padding: 12px;
+      border-radius: 10px; font-size: 13px; font-weight: 700;
+      cursor: pointer; border: none; font-family: inherit; }
+    .modal-box .btn-dl { background: var(--celsa-red); color: #FFF; }
+    .modal-box .btn-dl:hover { background: #b8000f; }
+    .modal-box .btn-dl:disabled { background: #999; cursor: not-allowed; }
+    .modal-box .btn-no { background: #F0F0F2; color: var(--celsa-dark); }
+
+    /* ---- DATALIST STYLE ---- */
+    datalist { display: none; }
+
+    @media (max-width: 520px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .form-group.full { grid-column: span 1; }
+      .pesos-row { grid-column: span 1; grid-template-columns: 1fr; }
+      .rango-row { flex-direction: column; }
+      .rango-row .form-group { min-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+<div class="mobile-container">
+  <header>
+    <div class="header-left">
+      <button class="btn-back" id="btn-back" onclick="volverARango()" title="Volver a configurar rango">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <div class="logo-block">
+        <div class="logo-box">CELSA</div>
+        <div class="logo-sub">CONDUCTORES ELECTRICOS</div>
+      </div>
+    </div>
+    <div class="app-title">Registro Diario<br>Control de Calidad</div>
+  </header>
+
+  <main>
+    <!-- ================= VENTANA DE RANGO ================= -->
+    <div class="rango-screen" id="rango-screen">
+      <h2>Configurar rango de registros</h2>
+      <p class="rango-desc">
+        Ingrese el rango de números enteros que se usarán como código para cada registro.
+        El sistema buscará automáticamente el correlativo existente para evitar duplicados
+        y mantener la secuencia.
+      </p>
+      <div class="rango-row">
+        <div class="form-group">
+          <label>Desde</label>
+          <input type="number" id="rango-desde" placeholder="120" min="0" step="1">
+        </div>
+        <div class="form-group">
+          <label>Hasta</label>
+          <input type="number" id="rango-hasta" placeholder="200" min="0" step="1">
+        </div>
+      </div>
+      <div class="rango-info" id="rango-info">
+        <i class="fas fa-info-circle"></i>
+        <span>Ingrese un rango válido (ej: 120 - 200)</span>
+      </div>
+      <button class="btn btn-primary" onclick="confirmarRango()">
+        <i class="fas fa-check-circle"></i> Confirmar rango e ingresar
+      </button>
+    </div>
+
+    <!-- ================= FORMULARIO ================= -->
+    <div class="form-screen" id="form-screen">
+      <h2>Registro de Recorrido Diario</h2>
+      <div class="corr-pill">
+        <span class="corr-dot"></span>
+        Próximo código: <span id="prox-cod">--</span>
+        &nbsp;|&nbsp; Rango: <span id="rango-actual">--</span>
+      </div>
+
+      <div id="frames-container"></div>
+
+      <button class="btn-add" id="btn-add" onclick="agregarFrame()">
+        <i class="fas fa-plus-circle"></i> Añadir Producto
+      </button>
+
+      <div class="actions-bar">
+        <button class="btn btn-primary" id="btn-guardar" onclick="guardarTodo()">
+          <i class="fas fa-file-excel"></i> Registrar productos
+        </button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <p id="loading-text">Procesando...</p>
+</div>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal-box">
+    <div class="icon-ok"><i class="fas fa-check"></i></div>
+    <h3>¡Registro guardado!</h3>
+    <p id="modal-msg">Se guardó correctamente en la carpeta destino.</p>
+    <div class="btns">
+      <button class="btn-dl" onclick="cerrarModal()" style="flex:1;">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API_URL = 'https://script.google.com/macros/s/AKfycbyB1BJJ-pQifaTRko4-7vOPe13lYKyddFtIGVmC5LwLAdcHkCwdTq4vR-IKs9zjADnl/exec';
+
+  let contadorFrames = 0;
+  let guardando = false;
+
+  // ---- RANGO ----
+  const RANGO_KEY = 'celsa_rango_config';
+  let rangoConfig = null; // { desde, hasta, siguiente }
+
+  const RECORRIDOS_KEY = 'celsa_recorridos';
+
+  // ---- LOTE POR DEFECTO ----
+  const LOTE_PREFIJO_DEFAULT = '095100';
+
+  // ---- MAPA DE TIPO A HOJA (solo para mensajes) ----
+  const NOMBRE_HOJA_POR_TIPO = {
+    '102': 'Inventario MP (102)',
+    '104': 'Inventario PP (104)',
+    '106': 'Inventario SCRAP (106)',
+    '112': 'Inventario PP (112)'
+  };
+
+  // ---- LISTAS PARA DATALIST ----
+  const PROCESOS = ['Aislación + Cubierta', 'Aislación Fase 1', 'Aislación Fase 2', 'Aislación Fase 3', 'Aislación Fase 4', 'Aislación Fase 5', 'Aislación Fase 6', 'Aislación Control', 'Aislación', 'Aislación Tierra', 'Alumbrado Público', 'Armadura', 'Aislación + Skin', 'Aislación + Traza', 'Cableado de fases aisladas', 'Cableado capa 1 de hilos gruesos o haces', 'Cableado capa 2 de hilos gruesos o haces', 'Cableado capa 3 de hilos gruesos o haces', 'Cableado de hilos gruesos o haces', 'Cableado de hilos gruesos o haces del núcleo', 'Cableado de hilos gruesos o haces Tierra', 'Cableado de hilos finos', 'Cableado de hilos finos para haces', 'Cableado de hilos finos para el núcleo', 'Cubierta Externa', 'Cubierta Externa Traza', 'Cableado Fases Control', 'Cableado hilos finos haces Tierra', 'Cubierta Interna Control', 'Cubierta Interna', 'Cableado hilos finos núcleo Tierra', 'Metrado', 'Encintado 1', 'Encintado 2', 'Encintado', 'Extrusión Tondino', 'Pruebas Finales', 'Pruebas Intermedias', 'Pantalla de Cinta', 'Pantalla hilos + cinta de cobre', 'Pantalla de Hilos', 'Relleno + Cubierta', 'Recuperado', 'Relleno', 'Relleno Tierra', 'Triple Extrusión', 'Trefilado Fino 4 Hilos', 'Trefilado Fino 5 Hilos', 'Trefilado Fino 6 Hilos', 'Trefilado Fino 7 Hilos', 'Trefilado Fino', 'Trefilado Grueso', 'Trefilado Grueso Tierra', 'Trenzado Malla de Cobre Fase 1', 'Trenzado Malla de Cobre Fase 2', 'Trenzado Malla de Cobre Fase 3', 'Trenzado Malla de Cobre', 'Trenzado Malla de Poliester'];
+  const UBICACIONES = ['Trefilado','Cordado','Extrusora','Cableado','Fulton','Famia','Mesanine'];
+
+  function _hoyStr() {
+    const h = new Date();
+    return h.getFullYear() + '-' +
+           String(h.getMonth() + 1).padStart(2, '0') + '-' +
+           String(h.getDate()).padStart(2, '0');
+  }
+
+  function obtenerRecorridosHoy() {
+    try {
+      const raw = localStorage.getItem(RECORRIDOS_KEY);
+      if (!raw) return 0;
+      const obj = JSON.parse(raw);
+      if (obj && obj.fecha === _hoyStr()) {
+        return parseInt(obj.count, 10) || 0;
+      }
+      return 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  function incrementarRecorridosHoy() {
+    const actual = obtenerRecorridosHoy();
+    const nuevo = actual + 1;
+    try {
+      localStorage.setItem(RECORRIDOS_KEY, JSON.stringify({
+        fecha: _hoyStr(),
+        count: nuevo
+      }));
+    } catch (e) {}
+    return nuevo;
+  }
+
+  function showToast(msg, tipo = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show ' + tipo;
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.className = 'toast', 3500);
+  }
+  function showLoading(txt = 'Procesando...') {
+    document.getElementById('loading-text').textContent = txt;
+    document.getElementById('loading').classList.add('show');
+  }
+  function hideLoading() {
+    document.getElementById('loading').classList.remove('show');
+  }
+  function cerrarModal() {
+    document.getElementById('modal').classList.remove('show');
+  }
+
+  // ==================== HELPERS NUMÉRICOS ====================
+  /**
+   * Convierte un valor a número.
+   * - Si está vacío → ''
+   * - Si es 0 → 0
+   * - Si es número válido → número
+   */
+  function _parseNum(v) {
+    if (v === '' || v === null || v === undefined) return '';
+    const n = Number(v);
+    return isNaN(n) ? '' : n;
+  }
+
+  // ==================== RANGO ====================
+  function cargarRangoGuardado() {
+    try {
+      const raw = localStorage.getItem(RANGO_KEY);
+      if (!raw) return null;
+      const obj = JSON.parse(raw);
+      if (obj && typeof obj.desde === 'number' && typeof obj.hasta === 'number') {
+        return obj;
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function guardarRangoConfig(desde, hasta, siguiente) {
+    rangoConfig = { desde, hasta, siguiente };
+    try {
+      localStorage.setItem(RANGO_KEY, JSON.stringify(rangoConfig));
+    } catch (e) {}
+  }
+
+  function mostrarPantallaRango() {
+    document.getElementById('rango-screen').style.display = 'flex';
+    document.getElementById('form-screen').classList.remove('visible');
+    document.getElementById('btn-back').classList.remove('visible');
+  }
+
+  function mostrarPantallaFormulario() {
+    document.getElementById('rango-screen').style.display = 'none';
+    document.getElementById('form-screen').classList.add('visible');
+    document.getElementById('btn-back').classList.add('visible');
+  }
+
+  function volverARango() {
+    const conf = cargarRangoGuardado();
+    if (conf) {
+      document.getElementById('rango-desde').value = conf.desde;
+      document.getElementById('rango-hasta').value = conf.hasta;
+    }
+    mostrarPantallaRango();
+    document.getElementById('frames-container').innerHTML = '';
+    contadorFrames = 0;
+  }
+
+  async function confirmarRango() {
+    const desde = parseInt(document.getElementById('rango-desde').value, 10);
+    const hasta = parseInt(document.getElementById('rango-hasta').value, 10);
+
+    if (isNaN(desde) || isNaN(hasta)) {
+      showToast('Ingrese ambos números del rango.', 'error');
+      return;
+    }
+    if (desde >= hasta) {
+      showToast('El número "Desde" debe ser menor que "Hasta".', 'error');
+      return;
+    }
+    if (desde < 0 || hasta < 0) {
+      showToast('Los números deben ser positivos.', 'error');
+      return;
+    }
+    if ((hasta - desde) > 500) {
+      showToast('El rango no puede superar los 500 registros.', 'error');
+      return;
+    }
+
+    showLoading('Buscando correlativo en el rango...');
+
+    try {
+      const res = await apiGet({
+        action: 'buscarCorrelativoEnRango',
+        desde: desde,
+        hasta: hasta
+      });
+
+      let siguiente = desde;
+
+      if (res && res.ok && res.data && res.data.siguiente) {
+        siguiente = res.data.siguiente;
+      } else if (res && res.data && res.data.siguiente) {
+        siguiente = res.data.siguiente;
+      }
+
+      if (siguiente > hasta) {
+        showToast('El rango ya está completo. No hay números disponibles.', 'error');
+        hideLoading();
+        return;
+      }
+
+      guardarRangoConfig(desde, hasta, siguiente);
+      hideLoading();
+      mostrarPantallaFormulario();
+      actualizarPill();
+      agregarFrame();
+      actualizarContadorRecorridos();
+      showToast('Rango configurado: ' + desde + ' - ' + hasta + '. Próximo código: ' + siguiente, 'success');
+
+    } catch (err) {
+      hideLoading();
+      guardarRangoConfig(desde, hasta, desde);
+      mostrarPantallaFormulario();
+      actualizarPill();
+      agregarFrame();
+      actualizarContadorRecorridos();
+      showToast('Rango configurado (sin verificación previa): ' + desde + ' - ' + hasta, 'success');
+    }
+  }
+
+  function codigoParaIndex(index) {
+    if (!rangoConfig) return null;
+    const codigo = rangoConfig.siguiente + index;
+    if (codigo > rangoConfig.hasta) return null;
+    return codigo;
+  }
+
+  function proximoCodigoDisponible() {
+    const frames = document.querySelectorAll('.frame-container');
+    return codigoParaIndex(frames.length);
+  }
+
+  // ==================== API ====================
+  async function apiGet(params, intentos = 3) {
+    const url = API_URL + '?' + new URLSearchParams(params).toString();
+
+    for (let i = 1; i <= intentos; i++) {
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 30000);
+        const resp = await fetch(url, {
+          method: 'GET',
+          redirect: 'follow',
+          cache: 'no-store',
+          signal: controller.signal
+        });
+        clearTimeout(timer);
+
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const text = await resp.text();
+        try { return JSON.parse(text); }
+        catch (e) { throw new Error('Respuesta no JSON: ' + text.substring(0, 200)); }
+      } catch (err) {
+        console.warn('GET intento ' + i + ' fallido:', err.message);
+        if (i === intentos) throw err;
+        await new Promise(r => setTimeout(r, 1500 * i));
+      }
+    }
+  }
+
+  async function apiPost(body, intentos = 3) {
+    for (let i = 1; i <= intentos; i++) {
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 45000);
+        const resp = await fetch(API_URL, {
+          method: 'POST',
+          redirect: 'follow',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(body),
+          signal: controller.signal
+        });
+        clearTimeout(timer);
+
+        if (!resp.ok) throw new Error('HTTP ' + resp.status + ' al guardar');
+
+        const text = await resp.text();
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          throw new Error('Respuesta no JSON: ' + text.substring(0, 200));
+        }
+        return data;
+      } catch (err) {
+        console.warn('POST intento ' + i + ' fallido:', err.message);
+        if (i === intentos) throw err;
+        await new Promise(r => setTimeout(r, 3000 * i));
+      }
+    }
+  }
+
+  // ==================== INICIALIZACIÓN ====================
+  async function inicializar() {
+    const conf = cargarRangoGuardado();
+    if (conf && conf.siguiente <= conf.hasta) {
+      rangoConfig = conf;
+      mostrarPantallaFormulario();
+      actualizarPill();
+      agregarFrame();
+      actualizarContadorRecorridos();
+      return;
+    }
+    mostrarPantallaRango();
+  }
+
+  function actualizarPill() {
+    const el = document.getElementById('prox-cod');
+    const rangoEl = document.getElementById('rango-actual');
+    if (el) {
+      const sig = proximoCodigoDisponible();
+      el.textContent = sig !== null ? sig : 'Rango agotado';
+    }
+    if (rangoEl && rangoConfig) {
+      rangoEl.textContent = rangoConfig.desde + ' - ' + rangoConfig.hasta;
+    }
+  }
+
+  function actualizarContadorRecorridos() {
+    // El contador ya no se muestra en el formulario, pero mantenemos
+    // la función por compatibilidad (actualiza el localStorage).
+    obtenerRecorridosHoy();
+  }
+
+  // ==================== FRAMES ====================
+  function agregarFrame() {
+    const frames = document.querySelectorAll('.frame-container');
+    const index = frames.length;
+    const codigo = codigoParaIndex(index);
+
+    if (codigo === null) {
+      showToast('El rango de números se ha agotado. Vuelva a configurar el rango.', 'error');
+      actualizarBotonAdd();
+      return;
+    }
+
+    contadorFrames++;
+    const id = 'frame-' + contadorFrames;
+    const anioActual = String(new Date().getFullYear()).slice(-2);
+
+    const html = `
+      <div class="frame-container" id="${id}" data-index="${index}" data-origen="" data-peso-base="" data-tipo="">
+        <div class="frame-header">
+          <div class="left">
+            <i class="fas fa-box"></i>
+            <span>Producto #${index + 1} — <span class="cod">${codigo}</span></span>
+          </div>
+          <button class="btn-remove" onclick="eliminarFrame('${id}')" title="Eliminar">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+        <div class="frame-content">
+          <div class="form-grid">
+
+            <div class="form-group campo-ocultable" data-campo="of">
+              <label>OF</label>
+              <div style="display:flex; gap:8px; align-items:center;">
+                <span style="font-weight:700; font-size:13px;">OF</span>
+                <input type="text" class="inp-anio" maxlength="2"
+                       value="${anioActual}"
+                       style="width:60px; text-align:center;"
+                       placeholder="26"
+                       title="Año (2 dígitos)">
+                <span style="font-weight:700; font-size:13px;">/</span>
+                <input type="text" class="inp-of" maxlength="21"
+                       placeholder="2070 o 2070-1544-..."
+                       title="Hasta 4 OFs de 4 dígitos separadas por guion"
+                       oninput="onOF(this)"
+                       style="flex:1; min-width:120px;">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Tipo de producto</label>
+              <div style="display: flex; gap: 20px; margin-top: 12px; flex-wrap: wrap;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                  <input type="radio" name="tipo_prod_${id}" value="102"
+                         onchange="onTipoProducto(this)"> 102
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                  <input type="radio" name="tipo_prod_${id}" value="104"
+                         onchange="onTipoProducto(this)"> 104
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                  <input type="radio" name="tipo_prod_${id}" value="106"
+                         onchange="onTipoProducto(this)"> 106
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                  <input type="radio" name="tipo_prod_${id}" value="112"
+                         onchange="onTipoProducto(this)"> 112
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Código Artículo (4 dígitos)</label>
+              <input type="text" class="inp-articulo" maxlength="4"
+                     placeholder="Ej: 4410" oninput="onArticulo(this)">
+              <div class="status-msg"></div>
+            </div>
+
+            <div class="form-group">
+              <label>Producto</label>
+              <input type="text" class="inp-producto" readonly>
+            </div>
+
+            <div class="form-group campo-ocultable" data-campo="proceso">
+              <label>Proceso</label>
+              <input type="text" class="inp-proceso" list="lista-procesos"
+                     placeholder="Escriba o seleccione" autocomplete="off">
+            </div>
+
+            <div class="form-group campo-ocultable" data-campo="lote">
+              <label>Lote</label>
+              <input type="text" class="inp-lote"
+                     inputmode="numeric" pattern="[0-9]*"
+                     maxlength="10"
+                     value="${LOTE_PREFIJO_DEFAULT}"
+                     placeholder="Ej: 0951007649">
+            </div>
+
+            <div class="form-group">
+              <label>Ubicación</label>
+              <input type="text" class="inp-ubicacion" list="lista-ubicaciones"
+                     placeholder="Escriba o seleccione" autocomplete="off">
+            </div>
+
+            <div class="form-group campo-ocultable" data-campo="longitud">
+              <label>Longitud (m)</label>
+              <input type="text" class="inp-longitud"
+                     inputmode="numeric" pattern="[0-9]*"
+                     maxlength="6"
+                     placeholder="Ej: 100"
+                     oninput="onLongitud(this)">
+            </div>
+
+            <!-- Cálculo secundario: Peso Cu / Peso Al (OCULTOS pero funcionales) -->
+            <div class="pesos-cu-al-hidden" aria-hidden="true">
+              <input type="text" class="inp-pesocu" readonly tabindex="-1">
+            </div>
+            <div class="pesos-cu-al-hidden" aria-hidden="true">
+              <input type="text" class="inp-pesoal" readonly tabindex="-1">
+            </div>
+
+            <div class="pesos-row">
+              <div class="form-group">
+                <label>P. Bruto (kg)</label>
+                <input type="number" step="1" class="p_bruto" placeholder="0" oninput="calcularNetoFrame(this)" required>
+              </div>
+              <div class="form-group">
+                <label>Tara (kg)</label>
+                <input type="number" step="1" class="tara" placeholder="0" oninput="calcularNetoFrame(this)" required>
+              </div>
+              <div class="form-group">
+                <label>P. Neto (kg)</label>
+                <input type="number" class="p_neto" placeholder="Cálculo automático" readonly style="background-color: #F2F2F7; font-weight: 600;">
+              </div>
+            </div>
+
+            <div class="form-group full">
+              <label>Observación</label>
+              <input type="text" class="inp-observacion"
+                     placeholder="Opcional: detalle del producto / incidencia">
+            </div>
+
+          </div>
+        </div>
+      </div>`;
+
+    document.getElementById('frames-container').insertAdjacentHTML('beforeend', html);
+
+    // Inicializar datalists (una sola vez)
+    let datalistProc = document.getElementById('lista-procesos');
+    if (!datalistProc) {
+      datalistProc = document.createElement('datalist');
+      datalistProc.id = 'lista-procesos';
+      document.body.appendChild(datalistProc);
+    }
+    datalistProc.innerHTML = PROCESOS.map(p =>
+      `<option value="${p}">${p}</option>`
+    ).join('');
+
+    let datalistUbi = document.getElementById('lista-ubicaciones');
+    if (!datalistUbi) {
+      datalistUbi = document.createElement('datalist');
+      datalistUbi.id = 'lista-ubicaciones';
+      document.body.appendChild(datalistUbi);
+    }
+    datalistUbi.innerHTML = UBICACIONES.map(u =>
+      `<option value="${u}">${u}</option>`
+    ).join('');
+
+    actualizarBotonAdd();
+  }
+
+  function eliminarFrame(id) {
+    const el = document.getElementById(id);
+    if (el) el.remove();
+    reindexar();
+    actualizarPill();
+    actualizarBotonAdd();
+  }
+
+  function reindexar() {
+    const frames = document.querySelectorAll('.frame-container');
+    contadorFrames = 0;
+    frames.forEach((f, idx) => {
+      contadorFrames++;
+      f.dataset.index = idx;
+      const codigo = codigoParaIndex(idx);
+      const span = f.querySelector('.frame-header .left span');
+      if (span) {
+        if (codigo !== null) {
+          span.innerHTML = `Producto #${idx + 1} — <span class="cod">${codigo}</span>`;
+        } else {
+          span.innerHTML = `Producto #${idx + 1} — <span class="cod" style="color:#FFD; text-decoration:line-through;">SIN CÓDIGO</span>`;
+        }
+      }
+    });
+  }
+
+  function actualizarBotonAdd() {
+    const btn = document.getElementById('btn-add');
+    if (!btn) return;
+    const sig = proximoCodigoDisponible();
+    if (sig === null) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-ban"></i> Rango agotado';
+    } else {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-plus-circle"></i> Añadir Producto (' + sig + ')';
+    }
+  }
+
+  // ==================== TIPO DE PRODUCTO ====================
+  function onTipoProducto(radio) {
+    const frame = radio.closest('.frame-container');
+    frame.dataset.tipo = radio.value;
+    frame.dataset.origen = '';
+    frame.dataset.pesoBase = '';
+
+    const inpCu = frame.querySelector('.inp-pesocu');
+    const inpAl = frame.querySelector('.inp-pesoal');
+    if (inpCu) inpCu.value = '';
+    if (inpAl) inpAl.value = '';
+
+    const inpProd = frame.querySelector('.inp-producto');
+    const status = frame.querySelector('.status-msg');
+    const inpArt = frame.querySelector('.inp-articulo');
+    if (inpProd) inpProd.value = '';
+    if (status) { status.className = 'status-msg'; status.textContent = ''; }
+    if (inpArt) { inpArt.classList.remove('ok','error'); }
+
+    // Aplicar visibilidad de campos según tipo
+    aplicarVisibilidadCampos(frame, radio.value);
+
+    if (inpArt && /^\d{4}$/.test(inpArt.value.trim())) {
+      onArticulo(inpArt);
+    }
+  }
+
+  // Muestra u oculta campos según el tipo de producto
+  function aplicarVisibilidadCampos(frame, tipo) {
+    const camposOF = frame.querySelectorAll('.campo-ocultable[data-campo="of"]');
+    const camposProceso = frame.querySelectorAll('.campo-ocultable[data-campo="proceso"]');
+    const camposLote = frame.querySelectorAll('.campo-ocultable[data-campo="lote"]');
+    const camposLongitud = frame.querySelectorAll('.campo-ocultable[data-campo="longitud"]');
+
+    const mostrarTodo = () => {
+      camposOF.forEach(el => el.classList.remove('hidden'));
+      camposProceso.forEach(el => el.classList.remove('hidden'));
+      camposLote.forEach(el => el.classList.remove('hidden'));
+      camposLongitud.forEach(el => el.classList.remove('hidden'));
+    };
+
+    const ocultar = (arr) => {
+      arr.forEach(el => el.classList.add('hidden'));
+    };
+
+    mostrarTodo();
+
+    if (tipo === '102') {
+      // 102 → oculta: OF, Proceso, Longitud
+      ocultar(camposOF);
+      ocultar(camposProceso);
+      ocultar(camposLongitud);
+    } else if (tipo === '106') {
+      // 106 → oculta: OF, Proceso, Lote, Longitud
+      ocultar(camposOF);
+      ocultar(camposProceso);
+      ocultar(camposLote);
+      ocultar(camposLongitud);
+    }
+    // 104 y 112 → muestra todos
+  }
+
+  // ==================== ARTÍCULO ====================
+  async function onArticulo(input) {
+    const frame = input.closest('.frame-container');
+    const status = frame.querySelector('.status-msg');
+    const inpProd = frame.querySelector('.inp-producto');
+
+    const codigo4 = input.value.trim();
+    input.classList.remove('ok','error');
+    inpProd.value = '';
+    status.className = 'status-msg'; status.textContent = '';
+
+    frame.dataset.origen = '';
+    frame.dataset.pesoBase = '';
+
+    if (!/^\d{4}$/.test(codigo4)) return;
+
+    const tipo = frame.dataset.tipo;
+    if (!tipo) {
+      input.classList.add('error');
+      status.className = 'status-msg error';
+      status.textContent = 'Seleccione primero el Tipo de producto.';
+      return;
+    }
+
+    showLoading('Buscando en hoja "' + tipo + '"...');
+    try {
+      const res = await apiGet({
+        action: 'buscarArticulo',
+        codigo: codigo4,
+        hoja: tipo
+      });
+      const data = res.data || {};
+      if (data.ok) {
+        input.classList.add('ok');
+        status.className = 'status-msg ok';
+        const codMostrar = data.codigoReal || (tipo + '000' + codigo4);
+        status.textContent = '✓ Artículo ' + codMostrar +
+                             ' encontrado en hoja "' + (data.origen || tipo) + '"';
+        inpProd.value = data.producto || '';
+        frame.dataset.origen = data.origen || tipo;
+        frame.dataset.pesoBase = (data.peso === '' || data.peso === null) ? '' : String(data.peso);
+        recalcularPesos(frame);
+      } else {
+        input.classList.add('error');
+        status.className = 'status-msg error';
+        status.textContent = data.msg || ('No encontrado en hoja ' + tipo);
+      }
+    } catch (err) {
+      input.classList.add('error');
+      status.className = 'status-msg error';
+      status.textContent = 'Error: ' + err.message;
+    } finally {
+      hideLoading();
+    }
+  }
+
+  function recalcularPesos(frame) {
+    const inpCu = frame.querySelector('.inp-pesocu');
+    const inpAl = frame.querySelector('.inp-pesoal');
+    const inpLong = frame.querySelector('.inp-longitud');
+
+    if (!inpCu || !inpAl) return;
+
+    const origen = frame.dataset.origen;
+    const pesoBaseStr = frame.dataset.pesoBase;
+
+    inpCu.value = '';
+    inpAl.value = '';
+
+    if (!origen || pesoBaseStr === '') return;
+
+    const pesoBase = parseFloat(pesoBaseStr) || 0;
+    const longitud = parseFloat(inpLong ? inpLong.value : 0) || 0;
+
+    if (longitud <= 0) return;
+
+    const pesoFinal = +(pesoBase * longitud).toFixed(2);
+
+    if (origen === 'Cu') {
+      inpCu.value = pesoFinal;
+    } else if (origen === 'Al') {
+      inpAl.value = pesoFinal;
+    } else {
+      // Tipos 102, 104, 106, 112 → por defecto Peso Cu
+      inpCu.value = pesoFinal;
+    }
+  }
+
+  function onLongitud(input) {
+    let v = String(input.value || '').replace(/[^\d]/g, '');
+    if (v.length > 1) v = v.replace(/^0+/, '');
+    if (v.length > 6) v = v.substring(0, 6);
+    if (input.value !== v) input.value = v;
+
+    const frame = input.closest('.frame-container');
+    recalcularPesos(frame);
+  }
+
+  function onOF(input) {
+    let v = String(input.value || '').replace(/[^\d-]/g, '');
+    let partes = v.split('-');
+    if (partes.length > 4) {
+      partes = partes.slice(0, 4);
+    }
+    partes = partes.map(p => p.substring(0, 4));
+    v = partes.join('-');
+    if (input.value !== v) input.value = v;
+  }
+
+  function calcularNetoFrame(input) {
+    const frame = input.closest('.frame-container');
+    const bruto = parseFloat(frame.querySelector('.p_bruto').value) || 0;
+    const tara = parseFloat(frame.querySelector('.tara').value) || 0;
+    const neto = frame.querySelector('.p_neto');
+    neto.value = (bruto - tara).toFixed(2);
+  }
+
+  // ==================== RECOLECTAR ====================
+  function recolectarDatos() {
+    const frames = document.querySelectorAll('.frame-container');
+    const registros = [];
+    let error = null;
+
+    frames.forEach((f, i) => {
+      const idx = parseInt(f.dataset.index, 10);
+      const codigo = codigoParaIndex(idx);
+
+      if (codigo === null) {
+        error = `Producto #${i+1}: no tiene código asignado (rango agotado).`;
+        return;
+      }
+
+      const ofRaw = f.querySelector('.inp-of').value.trim();
+      const anio = f.querySelector('.inp-anio').value.trim();
+      const articulo = f.querySelector('.inp-articulo').value.trim();
+      const producto = f.querySelector('.inp-producto').value.trim();
+      const proceso = f.querySelector('.inp-proceso').value.trim();
+      const ubicacion = f.querySelector('.inp-ubicacion').value.trim();
+      const lote = f.querySelector('.inp-lote').value.trim();
+      const longitudRaw = f.querySelector('.inp-longitud').value.trim();
+      const pesoCu = f.querySelector('.inp-pesocu').value;
+      const pesoAl = f.querySelector('.inp-pesoal').value;
+      const pesoBruto = f.querySelector('.p_bruto').value;
+      const tara = f.querySelector('.tara').value;
+      const pesoNeto = f.querySelector('.p_neto').value;
+
+      const radioSel = f.querySelector('input[type="radio"][name^="tipo_prod_"]:checked');
+      const tipoProducto = radioSel ? radioSel.value : '';
+
+      const obsInput = f.querySelector('.inp-observacion');
+      const observacion = obsInput ? obsInput.value.trim() : '';
+
+      const partesOF = ofRaw.split('-').map(s => s.trim()).filter(Boolean);
+
+      // ============ VALIDACIONES ============
+      let ofError = null;
+      // Para 102 y 106 no se requiere OF
+      const requiereOF = (tipoProducto === '104' || tipoProducto === '112');
+      if (requiereOF) {
+        for (let j = 0; j < partesOF.length; j++) {
+          if (!/^\d{4}$/.test(partesOF[j])) {
+            ofError = `Producto #${i+1}: la OF #${j+1} debe tener 4 dígitos.`;
+            break;
+          }
+        }
+        if (partesOF.length === 0) {
+          ofError = `Producto #${i+1}: falta al menos una OF.`;
+        }
+        if (partesOF.length > 4) {
+          ofError = `Producto #${i+1}: máximo 4 OFs.`;
+        }
+      }
+      if (ofError) error = ofError;
+
+      if (longitudRaw && !/^\d+$/.test(longitudRaw))
+        error = `Producto #${i+1}: la longitud debe ser un número entero.`;
+
+      const longitudInt = parseInt(longitudRaw, 10);
+
+      if (!anio || !/^\d{2}$/.test(anio))
+        error = `Producto #${i+1}: año de OF inválido (2 dígitos).`;
+      if (!tipoProducto)
+        error = `Producto #${i+1}: falta seleccionar el tipo de producto.`;
+      if (!articulo)
+        error = `Producto #${i+1}: falta código de artículo.`;
+      if (!/^\d{4}$/.test(articulo))
+        error = `Producto #${i+1}: artículo debe ser 4 dígitos.`;
+      if (!producto)
+        error = `Producto #${i+1}: artículo no encontrado en lista.`;
+
+      // Solo validar longitud si el tipo la requiere
+      const requiereLongitud = (tipoProducto === '104' || tipoProducto === '112');
+      if (requiereLongitud && (isNaN(longitudInt) || longitudInt <= 0)) {
+        error = `Producto #${i+1}: falta longitud válida (> 0).`;
+      }
+
+      // ============ CONSTRUCCIÓN DEL REGISTRO SEGÚN TIPO ============
+      const baseRegistro = {
+        codigo: codigo,
+        tipoProducto: tipoProducto,
+        articulo: articulo,
+        producto: producto,
+        observacion: observacion
+      };
+
+      if (tipoProducto === '102' || tipoProducto === '106') {
+        // 102 y 106 → sin OF, sin proceso, sin longitud, sin pesos ocultos
+        baseRegistro.ofs = [];
+        baseRegistro.anio = anio;
+        baseRegistro.proceso = '';
+        baseRegistro.ubicacion = ubicacion;
+        baseRegistro.lote = lote;
+        baseRegistro.longitud = '';
+        baseRegistro.pesoCu = '';
+        baseRegistro.pesoAl = '';
+        baseRegistro.pesoBruto = _parseNum(pesoBruto);
+        baseRegistro.tara = _parseNum(tara);
+        baseRegistro.pesoNeto = _parseNum(pesoNeto);
+      } else {
+        // 104 y 112 → con OF, proceso, longitud, pesos ocultos
+        baseRegistro.ofs = partesOF;
+        baseRegistro.anio = anio;
+        baseRegistro.proceso = proceso;
+        baseRegistro.ubicacion = ubicacion;
+        baseRegistro.lote = lote;
+        baseRegistro.longitud = isNaN(longitudInt) ? '' : longitudInt;
+        baseRegistro.pesoCu = _parseNum(pesoCu);
+        baseRegistro.pesoAl = _parseNum(pesoAl);
+        baseRegistro.pesoBruto = _parseNum(pesoBruto);
+        baseRegistro.tara = _parseNum(tara);
+        baseRegistro.pesoNeto = _parseNum(pesoNeto);
+      }
+
+      registros.push(baseRegistro);
+    });
+
+    return { registros, error };
+  }
+
+  // ==================== LIMPIAR ====================
+  function limpiarFormularioInterno() {
+    document.getElementById('frames-container').innerHTML = '';
+    contadorFrames = 0;
+    actualizarPill();
+    actualizarBotonAdd();
+    agregarFrame();
+  }
+
+  function generarToken() {
+    return 'tk_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10);
+  }
+
+  // ==================== GUARDAR ====================
+  async function guardarTodo() {
+    if (guardando) return;
+
+    const frames = document.querySelectorAll('.frame-container');
+    if (frames.length === 0) {
+      showToast('Agrega al menos un producto.', 'error');
+      return;
+    }
+
+    if (!rangoConfig) {
+      showToast('Debe configurar un rango de números primero.', 'error');
+      return;
+    }
+
+    const { registros, error } = recolectarDatos();
+    if (error) {
+      showToast(error, 'error');
+      return;
+    }
+
+    const token = generarToken();
+
+    guardando = true;
+    showLoading('Guardando en Google Sheets...');
+    document.getElementById('btn-guardar').disabled = true;
+
+    try {
+      const res = await apiPost({
+        action: 'guardarRegistros',
+        token: token,
+        registros: registros
+      });
+
+      if (!res) throw new Error('Sin respuesta del backend.');
+      if (!res.ok) throw new Error(res.msg || 'Error al guardar');
+
+      const n = registros.length;
+      const nuevoSiguiente = rangoConfig.siguiente + n;
+
+      if (nuevoSiguiente > rangoConfig.hasta + 1) {
+        rangoConfig.siguiente = rangoConfig.hasta + 1;
+      } else {
+        rangoConfig.siguiente = nuevoSiguiente;
+      }
+
+      try {
+        localStorage.setItem(RANGO_KEY, JSON.stringify(rangoConfig));
+      } catch (e) {}
+
+      const nuevoTotal = incrementarRecorridosHoy();
+
+      // Contar registros por tipo para el mensaje
+      const conteoPorTipo = { '102': 0, '104': 0, '106': 0, '112': 0 };
+      registros.forEach(r => {
+        if (conteoPorTipo[r.tipoProducto] !== undefined) {
+          conteoPorTipo[r.tipoProducto]++;
+        }
+      });
+
+      const detalle = [];
+      ['102', '104', '106', '112'].forEach(t => {
+        if (conteoPorTipo[t] > 0) {
+          detalle.push(`${conteoPorTipo[t]} → ${NOMBRE_HOJA_POR_TIPO[t]}`);
+        }
+      });
+
+      document.getElementById('modal-msg').innerHTML =
+        `${res.total} registro(s) guardados correctamente.<br>` +
+        `<small style="color:#888;">${detalle.join('<br>')}</small><br><br>` +
+        `Recorrido #${nuevoTotal} del día.`;
+      document.getElementById('modal').classList.add('show');
+
+      limpiarFormularioInterno();
+
+    } catch (err) {
+      showToast('Error: ' + err.message, 'error');
+    } finally {
+      guardando = false;
+      hideLoading();
+      document.getElementById('btn-guardar').disabled = false;
+    }
+  }
+
+  // ==================== INICIAR ====================
+  window.addEventListener('DOMContentLoaded', inicializar);
+</script>
+</body>
+</html>
