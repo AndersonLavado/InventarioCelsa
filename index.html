@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <base target="_top">
-  <title>CELSA - Recorrido diario C. Calidad</title>
+  <title>CELSA - Inventario Anual</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root {
@@ -225,7 +225,7 @@
         <div class="logo-sub">CONDUCTORES ELECTRICOS</div>
       </div>
     </div>
-    <div class="app-title">Registro Diario<br>Control de Calidad</div>
+    <div class="app-title">Registro de productos<br>INVENTARIO ANUAL</div>
   </header>
 
   <main>
@@ -233,23 +233,21 @@
     <div class="rango-screen" id="rango-screen">
       <h2>Configurar rango de registros</h2>
       <p class="rango-desc">
-        Ingrese el rango de números enteros que se usarán como código para cada registro.
-        El sistema buscará automáticamente el correlativo existente para evitar duplicados
-        y mantener la secuencia.
+        Ingrese el rango de números designados que usarán durante el inventario anual.
       </p>
       <div class="rango-row">
         <div class="form-group">
           <label>Desde</label>
-          <input type="number" id="rango-desde" placeholder="120" min="0" step="1">
+          <input type="number" id="rango-desde" placeholder="1" min="0" step="1">
         </div>
         <div class="form-group">
           <label>Hasta</label>
-          <input type="number" id="rango-hasta" placeholder="200" min="0" step="1">
+          <input type="number" id="rango-hasta" placeholder="2000" min="0" step="1">
         </div>
       </div>
       <div class="rango-info" id="rango-info">
         <i class="fas fa-info-circle"></i>
-        <span>Ingrese un rango válido (ej: 120 - 200)</span>
+        <span>Ingrese un rango válido (ej: 1 - 2000)</span>
       </div>
       <button class="btn btn-primary" onclick="confirmarRango()">
         <i class="fas fa-check-circle"></i> Confirmar rango e ingresar
@@ -258,7 +256,7 @@
 
     <!-- ================= FORMULARIO ================= -->
     <div class="form-screen" id="form-screen">
-      <h2>Registro de Recorrido Diario</h2>
+      <h2>Registro de Productos</h2>
       <div class="corr-pill">
         <span class="corr-dot"></span>
         Próximo código: <span id="prox-cod">--</span>
@@ -375,13 +373,6 @@
     document.getElementById('modal').classList.remove('show');
   }
 
-  // ==================== HELPERS NUMÉRICOS ====================
-  /**
-   * Convierte un valor a número.
-   * - Si está vacío → ''
-   * - Si es 0 → 0
-   * - Si es número válido → número
-   */
   function _parseNum(v) {
     if (v === '' || v === null || v === undefined) return '';
     const n = Number(v);
@@ -595,8 +586,6 @@
   }
 
   function actualizarContadorRecorridos() {
-    // El contador ya no se muestra en el formulario, pero mantenemos
-    // la función por compatibilidad (actualiza el localStorage).
     obtenerRecorridosHoy();
   }
 
@@ -1078,7 +1067,6 @@
       };
 
       if (tipoProducto === '102' || tipoProducto === '106') {
-        // 102 y 106 → sin OF, sin proceso, sin longitud, sin pesos ocultos
         baseRegistro.ofs = [];
         baseRegistro.anio = anio;
         baseRegistro.proceso = '';
@@ -1091,7 +1079,6 @@
         baseRegistro.tara = _parseNum(tara);
         baseRegistro.pesoNeto = _parseNum(pesoNeto);
       } else {
-        // 104 y 112 → con OF, proceso, longitud, pesos ocultos
         baseRegistro.ofs = partesOF;
         baseRegistro.anio = anio;
         baseRegistro.proceso = proceso;
