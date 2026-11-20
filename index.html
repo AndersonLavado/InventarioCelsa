@@ -1,4 +1,3 @@
-
 <!DOCTYPE html> 
 <html lang="es">
 <head>
@@ -322,6 +321,16 @@
   // ---- LISTAS PARA DATALIST ----
   const PROCESOS = ['Aislación + Cubierta', 'Aislación Fase 1', 'Aislación Fase 2', 'Aislación Fase 3', 'Aislación Fase 4', 'Aislación Fase 5', 'Aislación Fase 6', 'Aislación Control', 'Aislación', 'Aislación Tierra', 'Alumbrado Público', 'Armadura', 'Aislación + Skin', 'Aislación + Traza', 'Cableado de fases aisladas', 'Cableado capa 1 de hilos gruesos o haces', 'Cableado capa 2 de hilos gruesos o haces', 'Cableado capa 3 de hilos gruesos o haces', 'Cableado de hilos gruesos o haces', 'Cableado de hilos gruesos o haces del núcleo', 'Cableado de hilos gruesos o haces Tierra', 'Cableado de hilos finos', 'Cableado de hilos finos para haces', 'Cableado de hilos finos para el núcleo', 'Cubierta Externa', 'Cubierta Externa Traza', 'Cableado Fases Control', 'Cableado hilos finos haces Tierra', 'Cubierta Interna Control', 'Cubierta Interna', 'Cableado hilos finos núcleo Tierra', 'Metrado', 'Encintado 1', 'Encintado 2', 'Encintado', 'Extrusión Tondino', 'Pruebas Finales', 'Pruebas Intermedias', 'Pantalla de Cinta', 'Pantalla hilos + cinta de cobre', 'Pantalla de Hilos', 'Relleno + Cubierta', 'Recuperado', 'Relleno', 'Relleno Tierra', 'Triple Extrusión', 'Trefilado Fino 4 Hilos', 'Trefilado Fino 5 Hilos', 'Trefilado Fino 6 Hilos', 'Trefilado Fino 7 Hilos', 'Trefilado Fino', 'Trefilado Grueso', 'Trefilado Grueso Tierra', 'Trenzado Malla de Cobre Fase 1', 'Trenzado Malla de Cobre Fase 2', 'Trenzado Malla de Cobre Fase 3', 'Trenzado Malla de Cobre', 'Trenzado Malla de Poliester'];
   const UBICACIONES = ['Trefilado','Cordado','Extrusora','Cableado','Fulton','Famia','Mesanine'];
+
+  // ---- PROCESOS EXCLUSIVOS PARA TIPO 112 ----
+  const PROCESOS_112 = [
+    'Trefilado Grueso',
+    'Trefilado Fino',
+    'Cuerda Desnuda',
+    'Cableado de hilos finos',
+    'Cableado de hilos gruesos o haces',
+    'Aislación'
+  ];
 
   function _hoyStr() {
     const h = new Date();
@@ -748,6 +757,17 @@
       `<option value="${p}">${p}</option>`
     ).join('');
 
+    // Datalist exclusivo para tipo 112
+    let datalistProc112 = document.getElementById('lista-procesos-112');
+    if (!datalistProc112) {
+      datalistProc112 = document.createElement('datalist');
+      datalistProc112.id = 'lista-procesos-112';
+      document.body.appendChild(datalistProc112);
+    }
+    datalistProc112.innerHTML = PROCESOS_112.map(p =>
+      `<option value="${p}">${p}</option>`
+    ).join('');
+
     let datalistUbi = document.getElementById('lista-ubicaciones');
     if (!datalistUbi) {
       datalistUbi = document.createElement('datalist');
@@ -860,6 +880,18 @@
       ocultar(camposLongitud);
     }
     // 104 y 112 → muestra todos
+
+    // --- Datalist dinámico de procesos según tipo ---
+    const inpProceso = frame.querySelector('.inp-proceso');
+    if (inpProceso) {
+      const dlId = (tipo === '112') ? 'lista-procesos-112' : 'lista-procesos';
+      inpProceso.setAttribute('list', dlId);
+      // Si el valor actual no está en la lista permitida para 112, limpiarlo
+      if (tipo === '112') {
+        const val = String(inpProceso.value || '').trim();
+        if (val && PROCESOS_112.indexOf(val) === -1) inpProceso.value = '';
+      }
+    }
   }
 
   // ==================== ARTÍCULO ====================
@@ -1040,6 +1072,15 @@
         error = `Producto #${i+1}: la longitud debe ser un número entero.`;
 
       const longitudInt = parseInt(longitudRaw, 10);
+
+      // Validación de proceso para tipo 112 (debe ser uno de los 6 permitidos)
+      if (tipoProducto === '112') {
+        if (!proceso) {
+          error = `Producto #${i+1}: falta seleccionar el proceso.`;
+        } else if (PROCESOS_112.indexOf(proceso) === -1) {
+          error = `Producto #${i+1}: proceso no válido para tipo 112.`;
+        }
+      }
 
       if (!anio || !/^\d{2}$/.test(anio))
         error = `Producto #${i+1}: año de OF inválido (2 dígitos).`;
