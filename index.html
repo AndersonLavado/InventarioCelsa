@@ -229,7 +229,6 @@
   </header>
 
   <main>
-    <!-- ================= VENTANA DE RANGO ================= -->
     <div class="rango-screen" id="rango-screen">
       <h2>Configurar rango de registros</h2>
       <p class="rango-desc">
@@ -254,7 +253,6 @@
       </button>
     </div>
 
-    <!-- ================= FORMULARIO ================= -->
     <div class="form-screen" id="form-screen">
       <h2>Registro de Productos</h2>
       <div class="corr-pill">
@@ -301,16 +299,13 @@
   let contadorFrames = 0;
   let guardando = false;
 
-  // ---- RANGO ----
   const RANGO_KEY = 'celsa_rango_config';
   let rangoConfig = null; // { desde, hasta, siguiente }
 
   const RECORRIDOS_KEY = 'celsa_recorridos';
 
-  // ---- LOTE POR DEFECTO ----
   const LOTE_PREFIJO_DEFAULT = '095140';
 
-  // ---- MAPA DE TIPO A HOJA (solo para mensajes) ----
   const NOMBRE_HOJA_POR_TIPO = {
     '102': 'Inventario MP (102)',
     '104': 'Inventario PP (104)',
@@ -318,11 +313,9 @@
     '112': 'Inventario PP (112)'
   };
 
-  // ---- LISTAS PARA DATALIST ----
   const PROCESOS = ['Aislación + Cubierta', 'Aislación Fase 1', 'Aislación Fase 2', 'Aislación Fase 3', 'Aislación Fase 4', 'Aislación Fase 5', 'Aislación Fase 6', 'Aislación Control', 'Aislación', 'Aislación Tierra', 'Alumbrado Público', 'Armadura', 'Aislación + Skin', 'Aislación + Traza', 'Cableado de fases aisladas', 'Cableado capa 1 de hilos gruesos o haces', 'Cableado capa 2 de hilos gruesos o haces', 'Cableado capa 3 de hilos gruesos o haces', 'Cableado de hilos gruesos o haces', 'Cableado de hilos gruesos o haces del núcleo', 'Cableado de hilos gruesos o haces Tierra', 'Cableado de hilos finos', 'Cableado de hilos finos para haces', 'Cableado de hilos finos para el núcleo', 'Cubierta Externa', 'Cubierta Externa Traza', 'Cableado Fases Control', 'Cableado hilos finos haces Tierra', 'Cubierta Interna Control', 'Cubierta Interna', 'Cableado hilos finos núcleo Tierra', 'Metrado', 'Encintado 1', 'Encintado 2', 'Encintado', 'Extrusión Tondino', 'Pruebas Finales', 'Pruebas Intermedias', 'Pantalla de Cinta', 'Pantalla hilos + cinta de cobre', 'Pantalla de Hilos', 'Relleno + Cubierta', 'Recuperado', 'Relleno', 'Relleno Tierra', 'Triple Extrusión', 'Trefilado Fino 4 Hilos', 'Trefilado Fino 5 Hilos', 'Trefilado Fino 6 Hilos', 'Trefilado Fino 7 Hilos', 'Trefilado Fino', 'Trefilado Grueso', 'Trefilado Grueso Tierra', 'Trenzado Malla de Cobre Fase 1', 'Trenzado Malla de Cobre Fase 2', 'Trenzado Malla de Cobre Fase 3', 'Trenzado Malla de Cobre', 'Trenzado Malla de Poliester'];
   const UBICACIONES = ['Trefilado','Cordado','Extrusora','Cableado','Fulton','Famia','Mesanine'];
 
-  // ---- PROCESOS EXCLUSIVOS PARA TIPO 112 ----
   const PROCESOS_112 = [
     'Trefilado Grueso',
     'Trefilado Fino',
@@ -497,6 +490,33 @@
     }
   }
 
+  /**
+   * Refresca rangoConfig.siguiente consultando al backend.
+   * Se llama al inicializar y al recargar la página estando en el formulario.
+   */
+  async function refrescarCorrelativoDesdeBackend() {
+    if (!rangoConfig || typeof rangoConfig.desde !== 'number' || typeof rangoConfig.hasta !== 'number') return;
+    try {
+      const res = await apiGet({
+        action: 'buscarCorrelativoEnRango',
+        desde: rangoConfig.desde,
+        hasta: rangoConfig.hasta
+      });
+      let sig = rangoConfig.desde;
+      if (res && res.ok && res.data && typeof res.data.siguiente === 'number') {
+        sig = res.data.siguiente;
+      } else if (res && res.data && typeof res.data.siguiente === 'number') {
+        sig = res.data.siguiente;
+      }
+      rangoConfig.siguiente = sig;
+      try {
+        localStorage.setItem(RANGO_KEY, JSON.stringify(rangoConfig));
+      } catch (e) {}
+    } catch (e) {
+      // Si falla, mantener lo que había
+    }
+  }
+
   function codigoParaIndex(index) {
     if (!rangoConfig) return null;
     const codigo = rangoConfig.siguiente + index;
@@ -576,6 +596,18 @@
       rangoConfig = conf;
       mostrarPantallaFormulario();
       actualizarPill();
+
+      // Refrescar el correlativo real desde el backend (evita desfase tras recarga)
+      await refrescarCorrelativoDesdeBackend();
+      actualizarPill();
+
+      // Re-verificar que aún hay margen; si el rango se agotó, volver a la pantalla de rango
+      if (rangoConfig.siguiente > rangoConfig.hasta) {
+        mostrarPantallaRango();
+        showToast('El rango configurado ya está completo. Configure uno nuevo.', 'error');
+        return;
+      }
+
       agregarFrame();
       actualizarContadorRecorridos();
       return;
@@ -630,9 +662,9 @@
           <div class="form-grid">
 
             <div class="form-group campo-ocultable" data-campo="of">
-              <label>OF</label>
+              <label class="lbl-of">OF</label>
               <div style="display:flex; gap:8px; align-items:center;">
-                <span style="font-weight:700; font-size:13px;">OF</span>
+                <span class="span-of-prefix" style="font-weight:700; font-size:13px;">OF</span>
                 <input type="text" class="inp-anio" maxlength="2"
                        value="${anioActual}"
                        style="width:60px; text-align:center;"
@@ -711,7 +743,6 @@
                      oninput="onLongitud(this)">
             </div>
 
-            <!-- Cálculo secundario: Peso Cu / Peso Al (OCULTOS pero funcionales) -->
             <div class="pesos-cu-al-hidden" aria-hidden="true">
               <input type="text" class="inp-pesocu" readonly tabindex="-1">
             </div>
@@ -746,7 +777,6 @@
 
     document.getElementById('frames-container').insertAdjacentHTML('beforeend', html);
 
-    // Inicializar datalists (una sola vez)
     let datalistProc = document.getElementById('lista-procesos');
     if (!datalistProc) {
       datalistProc = document.createElement('datalist');
@@ -757,7 +787,6 @@
       `<option value="${p}">${p}</option>`
     ).join('');
 
-    // Datalist exclusivo para tipo 112
     let datalistProc112 = document.getElementById('lista-procesos-112');
     if (!datalistProc112) {
       datalistProc112 = document.createElement('datalist');
@@ -839,7 +868,6 @@
     if (status) { status.className = 'status-msg'; status.textContent = ''; }
     if (inpArt) { inpArt.classList.remove('ok','error'); }
 
-    // Aplicar visibilidad de campos según tipo
     aplicarVisibilidadCampos(frame, radio.value);
 
     if (inpArt && /^\d{4}$/.test(inpArt.value.trim())) {
@@ -847,7 +875,6 @@
     }
   }
 
-  // Muestra u oculta campos según el tipo de producto
   function aplicarVisibilidadCampos(frame, tipo) {
     const camposOF = frame.querySelectorAll('.campo-ocultable[data-campo="of"]');
     const camposProceso = frame.querySelectorAll('.campo-ocultable[data-campo="proceso"]');
@@ -868,30 +895,33 @@
     mostrarTodo();
 
     if (tipo === '102') {
-      // 102 → oculta: OF, Proceso, Longitud
       ocultar(camposOF);
       ocultar(camposProceso);
       ocultar(camposLongitud);
     } else if (tipo === '106') {
-      // 106 → oculta: OF, Proceso, Lote, Longitud
       ocultar(camposOF);
       ocultar(camposProceso);
       ocultar(camposLote);
       ocultar(camposLongitud);
     }
-    // 104 y 112 → muestra todos
 
     // --- Datalist dinámico de procesos según tipo ---
     const inpProceso = frame.querySelector('.inp-proceso');
     if (inpProceso) {
       const dlId = (tipo === '112') ? 'lista-procesos-112' : 'lista-procesos';
       inpProceso.setAttribute('list', dlId);
-      // Si el valor actual no está en la lista permitida para 112, limpiarlo
       if (tipo === '112') {
         const val = String(inpProceso.value || '').trim();
         if (val && PROCESOS_112.indexOf(val) === -1) inpProceso.value = '';
       }
     }
+
+    // --- Cambio de etiqueta OF/OFS (solo 112 usa OFS) ---
+    const lblOF = frame.querySelector('.lbl-of');
+    const spanPref = frame.querySelector('.span-of-prefix');
+    const es112 = (tipo === '112');
+    if (lblOF) lblOF.textContent = es112 ? 'OFS' : 'OF';
+    if (spanPref) spanPref.textContent = es112 ? 'OFS' : 'OF';
   }
 
   // ==================== ARTÍCULO ====================
@@ -977,7 +1007,6 @@
     } else if (origen === 'Al') {
       inpAl.value = pesoFinal;
     } else {
-      // Tipos 102, 104, 106, 112 → por defecto Peso Cu
       inpCu.value = pesoFinal;
     }
   }
@@ -1048,9 +1077,7 @@
 
       const partesOF = ofRaw.split('-').map(s => s.trim()).filter(Boolean);
 
-      // ============ VALIDACIONES ============
       let ofError = null;
-      // Para 102 y 106 no se requiere OF
       const requiereOF = (tipoProducto === '104' || tipoProducto === '112');
       if (requiereOF) {
         for (let j = 0; j < partesOF.length; j++) {
@@ -1073,7 +1100,6 @@
 
       const longitudInt = parseInt(longitudRaw, 10);
 
-      // Validación de proceso para tipo 112 (debe ser uno de los 6 permitidos)
       if (tipoProducto === '112') {
         if (!proceso) {
           error = `Producto #${i+1}: falta seleccionar el proceso.`;
@@ -1093,15 +1119,13 @@
       if (!producto)
         error = `Producto #${i+1}: artículo no encontrado en lista.`;
 
-      // Solo validar longitud si el tipo la requiere
       const requiereLongitud = (tipoProducto === '104' || tipoProducto === '112');
       if (requiereLongitud && (isNaN(longitudInt) || longitudInt <= 0)) {
         error = `Producto #${i+1}: falta longitud válida (> 0).`;
       }
 
-      // ============ CONSTRUCCIÓN DEL REGISTRO SEGÚN TIPO ============
       const baseRegistro = {
-        codigo: codigo,
+        codigo: codigo, // valor estimado; el backend lo sobrescribe
         tipoProducto: tipoProducto,
         articulo: articulo,
         producto: producto,
@@ -1184,28 +1208,28 @@
       const res = await apiPost({
         action: 'guardarRegistros',
         token: token,
-        registros: registros
+        registros: registros,
+        rangoDesde: rangoConfig.desde,
+        rangoHasta: rangoConfig.hasta
       });
 
       if (!res) throw new Error('Sin respuesta del backend.');
       if (!res.ok) throw new Error(res.msg || 'Error al guardar');
 
-      const n = registros.length;
-      const nuevoSiguiente = rangoConfig.siguiente + n;
-
-      if (nuevoSiguiente > rangoConfig.hasta + 1) {
-        rangoConfig.siguiente = rangoConfig.hasta + 1;
+      // Actualizar siguiente con lo que devuelve el backend
+      if (typeof res.siguienteDespues === 'number') {
+        rangoConfig.siguiente = res.siguienteDespues;
       } else {
-        rangoConfig.siguiente = nuevoSiguiente;
+        const n = registros.length;
+        const nuevoSiguiente = rangoConfig.siguiente + n;
+        rangoConfig.siguiente = (nuevoSiguiente > rangoConfig.hasta + 1) ? (rangoConfig.hasta + 1) : nuevoSiguiente;
       }
-
       try {
         localStorage.setItem(RANGO_KEY, JSON.stringify(rangoConfig));
       } catch (e) {}
 
       const nuevoTotal = incrementarRecorridosHoy();
 
-      // Contar registros por tipo para el mensaje
       const conteoPorTipo = { '102': 0, '104': 0, '106': 0, '112': 0 };
       registros.forEach(r => {
         if (conteoPorTipo[r.tipoProducto] !== undefined) {
