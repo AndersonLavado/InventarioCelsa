@@ -64,7 +64,6 @@
       0%,100% { opacity: 1; transform: scale(1); }
       50%     { opacity: 0.35; transform: scale(0.65); } }
 
-    /* ---- VENTANA DE RANGO ---- */
     .rango-screen { display: flex; flex-direction: column; gap: 16px;
       padding: 10px 0; }
     .rango-screen h2 { margin-bottom: 0; }
@@ -80,7 +79,6 @@
     .rango-info.error { background: #FFF5F5; border-color: #E30613;
       color: var(--celsa-red); }
 
-    /* ---- FORMULARIO ---- */
     .form-screen { display: none; }
     .form-screen.visible { display: block; }
 
@@ -122,16 +120,41 @@
     .status-msg.ok    { color: #00B894; display: block; }
     .status-msg.error { color: var(--celsa-red); display: block; }
 
-    /* ---- PESOS EN UNA FILA ---- */
     .pesos-row { grid-column: span 2; display: grid;
       grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
 
-    /* ---- CAMPOS OCULTOS (Peso Cu / Peso Al) ---- */
     .pesos-cu-al-hidden { display: none !important; }
 
-    /* ---- CAMPOS OCULTABLES SEGÚN TIPO ---- */
     .campo-ocultable { display: flex; }
     .campo-ocultable.hidden { display: none !important; }
+
+    .longitud-wrap { display: flex; align-items: flex-end; gap: 8px; }
+    .longitud-wrap .form-group { flex: 1; }
+    .btn-sc {
+      padding: 10px 14px;
+      border: 2px solid var(--celsa-border);
+      background: #FFF;
+      color: var(--celsa-red);
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+      height: 42px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-sc:hover { background: #FFF0F0; border-color: var(--celsa-red); }
+    .btn-sc.active {
+      background: var(--celsa-red);
+      color: #FFF;
+      border-color: var(--celsa-red);
+    }
+    .btn-sc:disabled { opacity: 0.5; cursor: not-allowed; }
+    .inp-longitud.sc-mode { background: #F0F0F2; color: #555; cursor: not-allowed; font-weight: 600; }
 
     .btn-add { width: 100%; padding: 14px;
       background: #FFF; color: var(--celsa-red);
@@ -201,7 +224,6 @@
     .modal-box .btn-dl:disabled { background: #999; cursor: not-allowed; }
     .modal-box .btn-no { background: #F0F0F2; color: var(--celsa-dark); }
 
-    /* ---- DATALIST STYLE ---- */
     datalist { display: none; }
 
     @media (max-width: 520px) {
@@ -210,6 +232,7 @@
       .pesos-row { grid-column: span 1; grid-template-columns: 1fr; }
       .rango-row { flex-direction: column; }
       .rango-row .form-group { min-width: 100%; }
+      .longitud-wrap { flex-direction: row; }
     }
   </style>
 </head>
@@ -237,11 +260,11 @@
       <div class="rango-row">
         <div class="form-group">
           <label>Desde</label>
-          <input type="number" id="rango-desde" placeholder="Ejemplo: 1" min="0" step="1">
+          <input type="number" id="rango-desde" placeholder="1" min="0" step="1">
         </div>
         <div class="form-group">
           <label>Hasta</label>
-          <input type="number" id="rango-hasta" placeholder="Ejemplo: 2000" min="0" step="1">
+          <input type="number" id="rango-hasta" placeholder="2000" min="0" step="1">
         </div>
       </div>
       <div class="rango-info" id="rango-info">
@@ -300,10 +323,9 @@
   let guardando = false;
 
   const RANGO_KEY = 'celsa_rango_config';
-  let rangoConfig = null; // { desde, hasta, siguiente }
+  let rangoConfig = null;
 
   const RECORRIDOS_KEY = 'celsa_recorridos';
-
   const LOTE_PREFIJO_DEFAULT = '095140';
 
   const NOMBRE_HOJA_POR_TIPO = {
@@ -382,7 +404,6 @@
     return isNaN(n) ? '' : n;
   }
 
-  // ==================== RANGO ====================
   function cargarRangoGuardado() {
     try {
       const raw = localStorage.getItem(RANGO_KEY);
@@ -490,10 +511,6 @@
     }
   }
 
-  /**
-   * Refresca rangoConfig.siguiente consultando al backend.
-   * Se llama al inicializar y al recargar la página estando en el formulario.
-   */
   async function refrescarCorrelativoDesdeBackend() {
     if (!rangoConfig || typeof rangoConfig.desde !== 'number' || typeof rangoConfig.hasta !== 'number') return;
     try {
@@ -512,9 +529,7 @@
       try {
         localStorage.setItem(RANGO_KEY, JSON.stringify(rangoConfig));
       } catch (e) {}
-    } catch (e) {
-      // Si falla, mantener lo que había
-    }
+    } catch (e) {}
   }
 
   function codigoParaIndex(index) {
@@ -529,7 +544,6 @@
     return codigoParaIndex(frames.length);
   }
 
-  // ==================== API ====================
   async function apiGet(params, intentos = 3) {
     const url = API_URL + '?' + new URLSearchParams(params).toString();
 
@@ -589,7 +603,6 @@
     }
   }
 
-  // ==================== INICIALIZACIÓN ====================
   async function inicializar() {
     const conf = cargarRangoGuardado();
     if (conf && conf.siguiente <= conf.hasta) {
@@ -597,11 +610,9 @@
       mostrarPantallaFormulario();
       actualizarPill();
 
-      // Refrescar el correlativo real desde el backend (evita desfase tras recarga)
       await refrescarCorrelativoDesdeBackend();
       actualizarPill();
 
-      // Re-verificar que aún hay margen; si el rango se agotó, volver a la pantalla de rango
       if (rangoConfig.siguiente > rangoConfig.hasta) {
         mostrarPantallaRango();
         showToast('El rango configurado ya está completo. Configure uno nuevo.', 'error');
@@ -631,7 +642,6 @@
     obtenerRecorridosHoy();
   }
 
-  // ==================== FRAMES ====================
   function agregarFrame() {
     const frames = document.querySelectorAll('.frame-container');
     const index = frames.length;
@@ -648,7 +658,7 @@
     const anioActual = String(new Date().getFullYear()).slice(-2);
 
     const html = `
-      <div class="frame-container" id="${id}" data-index="${index}" data-origen="" data-peso-base="" data-tipo="">
+      <div class="frame-container" id="${id}" data-index="${index}" data-origen="" data-peso-base="" data-tipo="" data-peso-por-metro="" data-modo-cantidad="manual">
         <div class="frame-header">
           <div class="left">
             <i class="fas fa-box"></i>
@@ -662,7 +672,7 @@
           <div class="form-grid">
 
             <div class="form-group campo-ocultable" data-campo="of">
-              <label class="lbl-of"></label>
+              <label class="lbl-of">OF</label>
               <div style="display:flex; gap:8px; align-items:center;">
                 <span class="span-of-prefix" style="font-weight:700; font-size:13px;">OF</span>
                 <input type="text" class="inp-anio" maxlength="2"
@@ -716,7 +726,7 @@
             <div class="form-group campo-ocultable" data-campo="proceso">
               <label>Proceso</label>
               <input type="text" class="inp-proceso" list="lista-procesos"
-                     placeholder="Escriba o seleccione" autocomplete="off">
+                     placeholder="Escriba o seleccione" autocomplete="off" onchange="onProcesoChange(this)">
             </div>
 
             <div class="form-group campo-ocultable" data-campo="lote">
@@ -736,11 +746,18 @@
 
             <div class="form-group campo-ocultable" data-campo="longitud">
               <label>Longitud (m)</label>
-              <input type="text" class="inp-longitud"
-                     inputmode="numeric" pattern="[0-9]*"
-                     maxlength="9"
-                     placeholder="Ej: 100"
-                     oninput="onLongitud(this)">
+              <div class="longitud-wrap">
+                <div class="form-group">
+                  <input type="text" class="inp-longitud"
+                         inputmode="numeric" pattern="[0-9]*"
+                         maxlength="9"
+                         placeholder="Ej: 100"
+                         oninput="onLongitud(this)">
+                </div>
+                <button type="button" class="btn-sc" onclick="toggleSinCantidad(this)" title="Sin cantidad: calcular por peso">
+                  <i class="fas fa-calculator"></i> S/C
+                </button>
+              </div>
             </div>
 
             <div class="pesos-cu-al-hidden" aria-hidden="true">
@@ -849,12 +866,12 @@
     }
   }
 
-  // ==================== TIPO DE PRODUCTO ====================
   function onTipoProducto(radio) {
     const frame = radio.closest('.frame-container');
     frame.dataset.tipo = radio.value;
     frame.dataset.origen = '';
     frame.dataset.pesoBase = '';
+    frame.dataset.pesoPorMetro = '';
 
     const inpCu = frame.querySelector('.inp-pesocu');
     const inpAl = frame.querySelector('.inp-pesoal');
@@ -905,7 +922,6 @@
       ocultar(camposLongitud);
     }
 
-    // --- Datalist dinámico de procesos según tipo ---
     const inpProceso = frame.querySelector('.inp-proceso');
     if (inpProceso) {
       const dlId = (tipo === '112') ? 'lista-procesos-112' : 'lista-procesos';
@@ -916,14 +932,23 @@
       }
     }
 
-    // --- Cambio de etiqueta OF/OFS (solo 112 usa OFS) ---
     const lblOF = frame.querySelector('.lbl-of');
     const spanPref = frame.querySelector('.span-of-prefix');
     const es112 = (tipo === '112');
+    if (lblOF) lblOF.textContent = es112 ? 'OFS' : 'OF';
     if (spanPref) spanPref.textContent = es112 ? 'OFS' : 'OF';
   }
 
-  // ==================== ARTÍCULO ====================
+  function onProcesoChange(input) {
+    const frame = input.closest('.frame-container');
+    if (frame.dataset.tipo === '112') {
+      const inpArt = frame.querySelector('.inp-articulo');
+      if (inpArt && /^\d{4}$/.test(inpArt.value.trim())) {
+        onArticulo(inpArt); // Re-buscar para actualizar pesoPorMetro
+      }
+    }
+  }
+
   async function onArticulo(input) {
     const frame = input.closest('.frame-container');
     const status = frame.querySelector('.status-msg');
@@ -936,8 +961,12 @@
 
     frame.dataset.origen = '';
     frame.dataset.pesoBase = '';
+    frame.dataset.pesoPorMetro = '';
 
-    if (!/^\d{4}$/.test(codigo4)) return;
+    if (!/^\d{4}$/.test(codigo4)) {
+      resetearPesosYLongitud(frame);
+      return;
+    }
 
     const tipo = frame.dataset.tipo;
     if (!tipo) {
@@ -947,12 +976,15 @@
       return;
     }
 
+    const procesoVal = frame.querySelector('.inp-proceso').value.trim();
+
     showLoading('Buscando en hoja "' + tipo + '"...');
     try {
       const res = await apiGet({
         action: 'buscarArticulo',
         codigo: codigo4,
-        hoja: tipo
+        hoja: tipo,
+        proceso: procesoVal // <-- Enviar proceso
       });
       const data = res.data || {};
       if (data.ok) {
@@ -964,19 +996,62 @@
         inpProd.value = data.producto || '';
         frame.dataset.origen = data.origen || tipo;
         frame.dataset.pesoBase = (data.peso === '' || data.peso === null) ? '' : String(data.peso);
+
+        let ppm = '';
+        if (tipo === '112') {
+          ppm = (data.pesoPorMetro === '' || data.pesoPorMetro === null) ? '' : String(data.pesoPorMetro);
+        } else {
+          ppm = frame.dataset.pesoBase;
+        }
+        frame.dataset.pesoPorMetro = ppm;
+
         recalcularPesos(frame);
+        if (frame.dataset.modoCantidad === 'sc') recalcularLongitudSC(frame);
       } else {
         input.classList.add('error');
         status.className = 'status-msg error';
         status.textContent = data.msg || ('No encontrado en hoja ' + tipo);
+        resetearPesosYLongitud(frame);
       }
     } catch (err) {
       input.classList.add('error');
       status.className = 'status-msg error';
       status.textContent = 'Error: ' + err.message;
+      resetearPesosYLongitud(frame);
     } finally {
       hideLoading();
     }
+  }
+
+  function resetearPesosYLongitud(frame) {
+    const inpBruto = frame.querySelector('.p_bruto');
+    const inpTara = frame.querySelector('.tara');
+    const inpNeto = frame.querySelector('.p_neto');
+    const inpLong = frame.querySelector('.inp-longitud');
+    const inpCu = frame.querySelector('.inp-pesocu');
+    const inpAl = frame.querySelector('.inp-pesoal');
+    // NUEVOS CAMPOS A LIMPIAR
+    const inpProceso = frame.querySelector('.inp-proceso');
+    const inpUbicacion = frame.querySelector('.inp-ubicacion');
+    const inpLote = frame.querySelector('.inp-lote');
+    const inpObs = frame.querySelector('.inp-observacion');
+
+    if (inpBruto) inpBruto.value = '';
+    if (inpTara) inpTara.value = '';
+    if (inpNeto) inpNeto.value = '';
+    if (inpLong) inpLong.value = '';
+    if (inpCu) inpCu.value = '';
+    if (inpAl) inpAl.value = '';
+    if (inpProceso) inpProceso.value = '';
+    if (inpUbicacion) inpUbicacion.value = '';
+    if (inpLote) inpLote.value = LOTE_PREFIJO_DEFAULT;
+    if (inpObs) inpObs.value = '';
+
+    frame.dataset.origen = '';
+    frame.dataset.pesoBase = '';
+    frame.dataset.pesoPorMetro = '';
+
+    setModoSC(frame, false);
   }
 
   function recalcularPesos(frame) {
@@ -1011,12 +1086,15 @@
   }
 
   function onLongitud(input) {
+    const frame = input.closest('.frame-container');
+    if (frame.dataset.modoCantidad === 'sc') {
+      setModoSC(frame, false);
+    }
     let v = String(input.value || '').replace(/[^\d]/g, '');
     if (v.length > 1) v = v.replace(/^0+/, '');
     if (v.length > 9) v = v.substring(0, 9);
     if (input.value !== v) input.value = v;
 
-    const frame = input.closest('.frame-container');
     recalcularPesos(frame);
   }
 
@@ -1037,9 +1115,60 @@
     const tara = parseFloat(frame.querySelector('.tara').value) || 0;
     const neto = frame.querySelector('.p_neto');
     neto.value = (bruto - tara).toFixed(2);
+
+    if (frame.dataset.modoCantidad === 'sc') {
+      recalcularLongitudSC(frame);
+    }
   }
 
-  // ==================== RECOLECTAR ====================
+  function toggleSinCantidad(btn) {
+    const frame = btn.closest('.frame-container');
+    const activo = frame.dataset.modoCantidad === 'sc';
+    setModoSC(frame, !activo);
+  }
+
+  function setModoSC(frame, activo) {
+    const btn = frame.querySelector('.btn-sc');
+    const inpLong = frame.querySelector('.inp-longitud');
+
+    if (activo) {
+      frame.dataset.modoCantidad = 'sc';
+      if (btn) btn.classList.add('active');
+      if (inpLong) {
+        inpLong.classList.add('sc-mode');
+        inpLong.setAttribute('readonly', 'readonly');
+      }
+      recalcularLongitudSC(frame);
+    } else {
+      frame.dataset.modoCantidad = 'manual';
+      if (btn) btn.classList.remove('active');
+      if (inpLong) {
+        inpLong.classList.remove('sc-mode');
+        inpLong.removeAttribute('readonly');
+      }
+      recalcularPesos(frame);
+    }
+  }
+
+  function recalcularLongitudSC(frame) {
+    const inpLong = frame.querySelector('.inp-longitud');
+    const inpNeto = frame.querySelector('.p_neto');
+    const pesoPorMetroStr = frame.dataset.pesoPorMetro;
+
+    if (!inpLong) return;
+
+    const pesoNeto = parseFloat(inpNeto ? inpNeto.value : 0) || 0;
+    const pesoPorMetro = parseFloat(pesoPorMetroStr) || 0;
+
+    let metros = 0;
+    if (pesoNeto > 0 && pesoPorMetro > 0) {
+      metros = Math.floor(pesoNeto / pesoPorMetro);
+    }
+    inpLong.value = String(metros);
+
+    recalcularPesos(frame);
+  }
+
   function recolectarDatos() {
     const frames = document.querySelectorAll('.frame-container');
     const registros = [];
@@ -1124,7 +1253,7 @@
       }
 
       const baseRegistro = {
-        codigo: codigo, // valor estimado; el backend lo sobrescribe
+        codigo: codigo,
         tipoProducto: tipoProducto,
         articulo: articulo,
         producto: producto,
@@ -1163,7 +1292,6 @@
     return { registros, error };
   }
 
-  // ==================== LIMPIAR ====================
   function limpiarFormularioInterno() {
     document.getElementById('frames-container').innerHTML = '';
     contadorFrames = 0;
@@ -1176,7 +1304,6 @@
     return 'tk_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10);
   }
 
-  // ==================== GUARDAR ====================
   async function guardarTodo() {
     if (guardando) return;
 
@@ -1215,7 +1342,6 @@
       if (!res) throw new Error('Sin respuesta del backend.');
       if (!res.ok) throw new Error(res.msg || 'Error al guardar');
 
-      // Actualizar siguiente con lo que devuelve el backend
       if (typeof res.siguienteDespues === 'number') {
         rangoConfig.siguiente = res.siguienteDespues;
       } else {
@@ -1260,7 +1386,6 @@
     }
   }
 
-  // ==================== INICIAR ====================
   window.addEventListener('DOMContentLoaded', inicializar);
 </script>
 </body>
