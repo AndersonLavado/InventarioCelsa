@@ -237,11 +237,11 @@
       <div class="rango-row">
         <div class="form-group">
           <label>Desde</label>
-          <input type="number" id="rango-desde" placeholder="1" min="0" step="1">
+          <input type="number" id="rango-desde" placeholder="Ejemplo: 1" min="0" step="1">
         </div>
         <div class="form-group">
           <label>Hasta</label>
-          <input type="number" id="rango-hasta" placeholder="2000" min="0" step="1">
+          <input type="number" id="rango-hasta" placeholder="Ejemplo: 2000" min="0" step="1">
         </div>
       </div>
       <div class="rango-info" id="rango-info">
@@ -662,7 +662,7 @@
           <div class="form-grid">
 
             <div class="form-group campo-ocultable" data-campo="of">
-              <label class="lbl-of">OF</label>
+              <label class="lbl-of"></label>
               <div style="display:flex; gap:8px; align-items:center;">
                 <span class="span-of-prefix" style="font-weight:700; font-size:13px;">OF</span>
                 <input type="text" class="inp-anio" maxlength="2"
@@ -920,7 +920,6 @@
     const lblOF = frame.querySelector('.lbl-of');
     const spanPref = frame.querySelector('.span-of-prefix');
     const es112 = (tipo === '112');
-    if (lblOF) lblOF.textContent = es112 ? 'OFS' : 'OF';
     if (spanPref) spanPref.textContent = es112 ? 'OFS' : 'OF';
   }
 
