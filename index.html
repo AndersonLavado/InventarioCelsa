@@ -335,7 +335,7 @@
     '112': 'Inventario PP (112)'
   };
 
-  const PROCESOS = ['Aislación + Cubierta', 'Aislación Fase 1', 'Aislación Fase 2', 'Aislación Fase 3', 'Aislación Fase 4', 'Aislación Fase 5', 'Aislación Fase 6', 'Aislación Control', 'Aislación', 'Aislación Tierra', 'Alumbrado Público', 'Armadura', 'Aislación + Skin', 'Aislación + Traza', 'Cableado de fases aisladas', 'Cableado capa 1 de hilos gruesos o haces', 'Cableado capa 2 de hilos gruesos o haces', 'Cableado capa 3 de hilos gruesos o haces', 'Cableado de hilos gruesos o haces', 'Cableado de hilos gruesos o haces del núcleo', 'Cableado de hilos gruesos o haces Tierra', 'Cableado de hilos finos', 'Cableado de hilos finos para haces', 'Cableado de hilos finos para el núcleo', 'Cubierta Externa', 'Cubierta Externa Traza', 'Cableado Fases Control', 'Cableado hilos finos haces Tierra', 'Cubierta Interna Control', 'Cubierta Interna', 'Cableado hilos finos núcleo Tierra', 'Metrado', 'Encintado 1', 'Encintado 2', 'Encintado', 'Extrusión Tondino', 'Pruebas Finales', 'Pruebas Intermedias', 'Pantalla de Cinta', 'Pantalla hilos + cinta de cobre', 'Pantalla de Hilos', 'Relleno + Cubierta', 'Recuperado', 'Relleno', 'Relleno Tierra', 'Triple Extrusión', 'Trefilado Fino 4 Hilos', 'Trefilado Fino 5 Hilos', 'Trefilado Fino 6 Hilos', 'Trefilado Fino 7 Hilos', 'Trefilado Fino', 'Trefilado Grueso', 'Trefilado Grueso Tierra', 'Trenzado Malla de Cobre Fase 1', 'Trenzado Malla de Cobre Fase 2', 'Trenzado Malla de Cobre Fase 3', 'Trenzado Malla de Cobre', 'Trenzado Malla de Poliester'];
+  const PROCESOS = ['Aislación', 'Aislación + Skin', 'Aislación + Traza', 'Extrusión Tondino', 'Triple Extrusión', 'Aislación Control', 'Aislación Tierra', 'Alumbrado Público', 'Aislación Piloto','Aislación Portante Acero', 'Encintado', 'Trenzado Malla de Cobre', 'Trenzado Malla de Poliester', 'Cableado de fases aisladas', 'Relleno', 'Cubierta Interna', 'Pantalla de Cinta', 'Pantalla de Hilos', 'Pantalla hilos + cinta de cobre', 'Armadura', 'Cubierta Externa', 'Cubierta Externa Traza', 'Metrado', 'Aislación + Cubierta', 'Relleno + Cubierta'];
   const UBICACIONES = ['Trefilado','Cordado','Extrusora','Cableado','Fulton','Famia','Mesanine'];
 
   const PROCESOS_112 = [
@@ -940,10 +940,10 @@
 
   function onProcesoChange(input) {
     const frame = input.closest('.frame-container');
-    if (frame.dataset.tipo === '112') {
+    if (frame.dataset.tipo === '112' || frame.dataset.tipo === '104') {
       const inpArt = frame.querySelector('.inp-articulo');
       if (inpArt && /^\d{4}$/.test(inpArt.value.trim())) {
-        onArticulo(inpArt); // Re-buscar para actualizar pesoPorMetro
+        onArticulo(inpArt); // Re-buscar para actualizar pesoPorMetro y recalcular si está en S/C
       }
     }
   }
@@ -997,7 +997,7 @@
         frame.dataset.pesoBase = (data.peso === '' || data.peso === null) ? '' : String(data.peso);
 
         let ppm = '';
-        if (tipo === '112') {
+        if (tipo === '112' || tipo === '104') {
           ppm = (data.pesoPorMetro === '' || data.pesoPorMetro === null) ? '' : String(data.pesoPorMetro);
         } else {
           ppm = frame.dataset.pesoBase;
@@ -1029,7 +1029,8 @@
     const inpLong = frame.querySelector('.inp-longitud');
     const inpCu = frame.querySelector('.inp-pesocu');
     const inpAl = frame.querySelector('.inp-pesoal');
-    // NUEVOS CAMPOS A LIMPIAR
+    
+    // Limpiar los campos solicitados
     const inpProceso = frame.querySelector('.inp-proceso');
     const inpUbicacion = frame.querySelector('.inp-ubicacion');
     const inpLote = frame.querySelector('.inp-lote');
@@ -1041,6 +1042,7 @@
     if (inpLong) inpLong.value = '';
     if (inpCu) inpCu.value = '';
     if (inpAl) inpAl.value = '';
+    
     if (inpProceso) inpProceso.value = '';
     if (inpUbicacion) inpUbicacion.value = '';
     if (inpLote) inpLote.value = LOTE_PREFIJO_DEFAULT;
