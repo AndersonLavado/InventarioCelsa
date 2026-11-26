@@ -51,8 +51,31 @@
     .btn-back.visible { display: block; }
 
     main { padding: 20px; flex: 1 0 auto; }
-    h2 { font-size: 18px; font-weight: 700; margin-bottom: 6px;
-      border-left: 4px solid var(--celsa-red); padding-left: 10px; }
+    
+    /* 🟢 HEADER DEL FORMULARIO CON BOTÓN */
+    .form-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .form-header-row h2 { margin-bottom: 0; }
+    .btn-view-records {
+      background: #FFF;
+      color: var(--celsa-blue);
+      border: 1px solid #90caf9;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn-view-records:hover { background: #E8F4FD; }
+
     .corr-pill { display: inline-flex; align-items: center; gap: 6px;
       background: #E8F4FD; border: 1px solid #90caf9;
       border-radius: 20px; padding: 4px 12px;
@@ -199,23 +222,26 @@
       animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
     .loading-overlay p { font-weight: 700; color: #555; font-size: 14px; }
+    
+    /* 🟢 MODAL PARA VER REGISTROS */
     .modal-overlay { position: fixed; inset: 0;
       background: rgba(0,0,0,0.55); display: none;
       align-items: center; justify-content: center;
       z-index: 9999; padding: 20px; }
     .modal-overlay.show { display: flex; }
     .modal-box { background: #FFF; border-radius: 14px;
-      max-width: 420px; width: 100%;
+      max-width: 95%; width: 800px;
       padding: 26px 24px; text-align: center;
       box-shadow: 0 20px 60px rgba(0,0,0,0.35);
-      animation: fadeIn 0.3s ease; }
+      animation: fadeIn 0.3s ease; 
+      max-height: 90vh; display: flex; flex-direction: column; }
     .modal-box .icon-ok { width: 64px; height: 64px; border-radius: 50%;
       background: #E8F8F2; display: flex; align-items: center;
       justify-content: center; margin: 0 auto 14px; }
     .modal-box .icon-ok i { font-size: 30px; color: #00B894; }
     .modal-box h3 { font-size: 17px; margin-bottom: 8px; }
     .modal-box p { font-size: 13px; color: #666; margin-bottom: 18px; }
-    .modal-box .btns { display: flex; gap: 10px; }
+    .modal-box .btns { display: flex; gap: 10px; margin-top: 15px; }
     .modal-box .btns button { flex: 1; padding: 12px;
       border-radius: 10px; font-size: 13px; font-weight: 700;
       cursor: pointer; border: none; font-family: inherit; }
@@ -223,6 +249,13 @@
     .modal-box .btn-dl:hover { background: #b8000f; }
     .modal-box .btn-dl:disabled { background: #999; cursor: not-allowed; }
     .modal-box .btn-no { background: #F0F0F2; color: var(--celsa-dark); }
+
+    /* 🟢 TABLA DE REGISTROS */
+    .table-container { overflow: auto; flex: 1; margin-bottom: 10px; border: 1px solid var(--celsa-border); border-radius: 8px; }
+    .table-records { width: 100%; border-collapse: collapse; font-size: 12px; text-align: left; }
+    .table-records th { background: #F5F5F7; padding: 8px 10px; border-bottom: 2px solid var(--celsa-border); position: sticky; top: 0; z-index: 10; white-space: nowrap; }
+    .table-records td { padding: 8px 10px; border-bottom: 1px solid var(--celsa-border); }
+    .table-records tr:hover { background: #FAFAFA; }
 
     datalist { display: none; }
 
@@ -233,6 +266,7 @@
       .rango-row { flex-direction: column; }
       .rango-row .form-group { min-width: 100%; }
       .longitud-wrap { flex-direction: row; }
+      .form-header-row { flex-direction: column; align-items: flex-start; gap: 10px; }
     }
   </style>
 </head>
@@ -277,7 +311,14 @@
     </div>
 
     <div class="form-screen" id="form-screen">
-      <h2>Registro de Productos</h2>
+      <!-- 🟢 NUEVO HEADER CON BOTÓN -->
+      <div class="form-header-row">
+        <h2>Registro de Productos</h2>
+        <button class="btn-view-records" onclick="abrirModalRegistros()">
+          <i class="fas fa-list-ul"></i> Ver registros cargados
+        </button>
+      </div>
+      
       <div class="corr-pill">
         <span class="corr-dot"></span>
         Próximo código: <span id="prox-cod">--</span>
@@ -305,6 +346,7 @@
   <p id="loading-text">Procesando...</p>
 </div>
 
+<!-- Modal de guardado -->
 <div class="modal-overlay" id="modal">
   <div class="modal-box">
     <div class="icon-ok"><i class="fas fa-check"></i></div>
@@ -312,6 +354,42 @@
     <p id="modal-msg">Se guardó correctamente en la carpeta destino.</p>
     <div class="btns">
       <button class="btn-dl" onclick="cerrarModal()" style="flex:1;">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- 🟢 Modal de Registros Cargados -->
+<div class="modal-overlay" id="modal-registros">
+  <div class="modal-box">
+    <h3>📋 Registros del Rango Actual</h3>
+    <p>Estos son los cables que ya han sido cargados en el rango <b><span id="modal-rango-text"></span></b>.</p>
+    
+    <div class="table-container">
+      <table class="table-records">
+                <thead>
+          <tr>
+            <th>Código</th>
+            <th>OF</th>
+            <th>Artículo</th>
+            <th>Producto</th>
+            <th>Proceso</th>
+            <th>Lote</th>
+            <th>Ubicación</th>
+            <th>Longitud</th>
+            <th>P. Bruto</th>
+            <th>Tara</th>
+            <th>P. Neto</th>
+            <th>Observación</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-registros">
+          <tr><td colspan="9" style="text-align: center;">Cargando datos...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="btns">
+      <button class="btn-dl" onclick="cerrarModalRegistros()" style="flex:1;">Cerrar ventana</button>
     </div>
   </div>
 </div>
@@ -335,7 +413,7 @@
     '112': 'Inventario PP (112)'
   };
 
-  const PROCESOS = ['Trefilado Grueso Fase', 'Trefilado Grueso Tierra', 'Trefilado Grueso Control', 'Trefilado Grueso Alumbrado', 'Trefilado Grueso Piloto', 'Conductor Desnudo Fase', 'Conductor Desnudo Tierra', 'Conductor Desnudo Control', 'Conductor Desnudo Alumbrado', 'Conductor Desnudo Piloto','Aislación', 'Aislación + Skin', 'Aislación + Traza', 'Extrusión Tondino', 'Triple Extrusión', 'Aislación Control', 'Aislación Tierra', 'Alumbrado Público', 'Aislación Piloto','Aislación Portante Acero', 'Encintado', 'Trenzado Malla de Cobre', 'Trenzado Malla de Poliester', 'Cableado de fases aisladas', 'Relleno', 'Cubierta Interna', 'Pantalla de Cinta', 'Pantalla de Hilos', 'Pantalla hilos + cinta de cobre', 'Armadura', 'Cubierta Externa', 'Cubierta Externa Traza', 'Metrado', 'Aislación + Cubierta', 'Relleno + Cubierta'];
+  const PROCESOS = ['Trefilado Grueso Fase', 'Trefilado Grueso Tierra', 'Trefilado Grueso Control', 'Trefilado Grueso Alumbrado', 'Trefilado Grueso Piloto', 'Conductor Desnudo Fase', 'Conductor Desnudo Tierra', 'Conductor Desnudo Control', 'Conductor Desnudo Alumbrado', 'Conductor Desnudo Piloto','Aislación', 'Aislación + Skin', 'Aislación + Traza', 'Extrusión Tondino', 'Triple Extrusión', 'Aislación Control', 'Aislación Tierra', 'Alumbrado Público', 'Aislación Piloto','Aislación Portante Acero', 'Encintado', 'Trenzado Malla de Cobre', 'Trenzado Malla de Poliester', 'Cableado de fases aisladas', 'Relleno', 'Cubierta Interna', 'Pantalla de Cinta', 'Pantalla de Hilos', 'Pantalla hilos + cinta de cobre', 'Armadura', 'Cubierta Externa', 'Cubierta Externa Traza', 'Aislación + Cubierta', 'Relleno + Cubierta', 'Metrado'];
   const UBICACIONES = ['Trefilado','Cordado','Extrusora','Cableado','Fulton','Famia','Mesanine'];
 
   const PROCESOS_112 = [
@@ -396,6 +474,59 @@
   }
   function cerrarModal() {
     document.getElementById('modal').classList.remove('show');
+  }
+
+  // 🟢 Funciones para el modal de Registros
+  function abrirModalRegistros() {
+    if (!rangoConfig) return;
+    document.getElementById('modal-rango-text').textContent = rangoConfig.desde + ' - ' + rangoConfig.hasta;
+    document.getElementById('modal-registros').classList.add('show');
+    cargarRegistrosEnModal();
+  }
+  
+  function cerrarModalRegistros() {
+    document.getElementById('modal-registros').classList.remove('show');
+  }
+
+    async function cargarRegistrosEnModal() {
+    const tbody = document.getElementById('tbody-registros');
+    tbody.innerHTML = '<tr><td colspan="12" style="text-align: center;">Consultando datos...</td></tr>';
+    
+    try {
+      const res = await apiGet({
+        action: 'obtenerResumenRango',
+        desde: rangoConfig.desde,
+        hasta: rangoConfig.hasta
+      });
+      
+      if (res && res.ok && Array.isArray(res.data)) {
+        if (res.data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="12" style="text-align: center;">No hay registros guardados en este rango aún.</td></tr>';
+          return;
+        }
+        
+        tbody.innerHTML = res.data.map(r => `
+          <tr>
+            <td><b>${r.codigo}</b></td>
+            <td>${r.ofs || '-'}</td>
+            <td>${r.codigoCompleto}</td>
+            <td>${r.producto}</td>
+            <td>${r.proceso || '-'}</td>
+            <td>${r.lote || '-'}</td>
+            <td>${r.ubicacion || '-'}</td>
+            <td>${r.longitud || '-'}</td>
+            <td>${r.pesoBruto || '0'}</td>
+            <td>${r.tara || '0'}</td>
+            <td>${r.pesoNeto || '0'}</td>
+            <td>${r.observacion || '-'}</td>
+          </tr>
+        `).join('');
+      } else {
+        tbody.innerHTML = '<tr><td colspan="12" style="text-align: center; color: red;">Error al cargar los datos.</td></tr>';
+      }
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan="12" style="text-align: center; color: red;">Error: ${err.message}</td></tr>`;
+    }
   }
 
   function _parseNum(v) {
@@ -943,7 +1074,7 @@
     if (frame.dataset.tipo === '112' || frame.dataset.tipo === '104') {
       const inpArt = frame.querySelector('.inp-articulo');
       if (inpArt && /^\d{4}$/.test(inpArt.value.trim())) {
-        onArticulo(inpArt); // Re-buscar para actualizar pesoPorMetro y recalcular si está en S/C
+        onArticulo(inpArt); 
       }
     }
   }
@@ -983,7 +1114,7 @@
         action: 'buscarArticulo',
         codigo: codigo4,
         hoja: tipo,
-        proceso: procesoVal // <-- Enviar proceso
+        proceso: procesoVal 
       });
       const data = res.data || {};
       if (data.ok) {
@@ -1030,7 +1161,6 @@
     const inpCu = frame.querySelector('.inp-pesocu');
     const inpAl = frame.querySelector('.inp-pesoal');
     
-    // Limpiar los campos solicitados
     const inpProceso = frame.querySelector('.inp-proceso');
     const inpUbicacion = frame.querySelector('.inp-ubicacion');
     const inpLote = frame.querySelector('.inp-lote');
@@ -1122,10 +1252,38 @@
     }
   }
 
-  function toggleSinCantidad(btn) {
+  async function toggleSinCantidad(btn) {
     const frame = btn.closest('.frame-container');
     const activo = frame.dataset.modoCantidad === 'sc';
-    setModoSC(frame, !activo);
+
+    if (!activo) {
+      const inpArt = frame.querySelector('.inp-articulo');
+      const inpProceso = frame.querySelector('.inp-proceso');
+      const tipo = frame.dataset.tipo;
+      
+      if (inpArt && /^\d{4}$/.test(inpArt.value.trim()) && (tipo === '104' || tipo === '112')) {
+        showLoading('Calculando metraje...');
+        try {
+          const res = await apiGet({
+            action: 'buscarArticulo',
+            codigo: inpArt.value.trim(),
+            hoja: tipo,
+            proceso: inpProceso.value.trim()
+          });
+          const data = res.data || {};
+          if (data.ok && data.pesoPorMetro !== undefined) {
+            frame.dataset.pesoPorMetro = (data.pesoPorMetro === '' || data.pesoPorMetro === null) ? '' : String(data.pesoPorMetro);
+          }
+        } catch(e) {
+          console.warn('Error al actualizar peso para S/C:', e);
+        } finally {
+          hideLoading();
+        }
+      }
+      setModoSC(frame, true);
+    } else {
+      setModoSC(frame, false);
+    }
   }
 
   function setModoSC(frame, activo) {
@@ -1390,4 +1548,4 @@
   window.addEventListener('DOMContentLoaded', inicializar);
 </script>
 </body>
-</html> 
+</html>
