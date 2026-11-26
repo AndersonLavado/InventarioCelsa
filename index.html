@@ -361,8 +361,8 @@
 <!-- 🟢 Modal de Registros Cargados -->
 <div class="modal-overlay" id="modal-registros">
   <div class="modal-box">
-    <h3>📋 Registros del Rango Actual</h3>
-    <p>Estos son los cables que ya han sido cargados en el rango <b><span id="modal-rango-text"></span></b>.</p>
+    <h3>📋 Registros Cargados</h3>
+    <p><b><span id="modal-rango-text"></span></b></p>
     
     <div class="table-container">
       <table class="table-records">
@@ -479,7 +479,6 @@
   // 🟢 Funciones para el modal de Registros
   function abrirModalRegistros() {
     if (!rangoConfig) return;
-    document.getElementById('modal-rango-text').textContent = rangoConfig.desde + ' - ' + rangoConfig.hasta;
     document.getElementById('modal-registros').classList.add('show');
     cargarRegistrosEnModal();
   }
