@@ -487,46 +487,95 @@
     document.getElementById('modal-registros').classList.remove('show');
   }
 
-    async function cargarRegistrosEnModal() {
-    const tbody = document.getElementById('tbody-registros');
-    tbody.innerHTML = '<tr><td colspan="12" style="text-align: center;">Consultando datos...</td></tr>';
-    
-    try {
-      const res = await apiGet({
-        action: 'obtenerResumenRango',
-        desde: rangoConfig.desde,
-        hasta: rangoConfig.hasta
-      });
-      
-      if (res && res.ok && Array.isArray(res.data)) {
-        if (res.data.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="12" style="text-align: center;">No hay registros guardados en este rango aún.</td></tr>';
-          return;
+ async function cargarRegistrosEnModal() {
+  const tbody = document.getElementById('tbody-registros');
+
+  tbody.innerHTML =
+    '<tr><td colspan="12" style="text-align: center;">Consultando datos...</td></tr>';
+
+  try {
+    const res = await apiGet({
+      action: 'obtenerResumenRango',
+      desde: rangoConfig.desde,
+      hasta: rangoConfig.hasta
+    });
+
+    if (res && res.ok && Array.isArray(res.data)) {
+
+      if (res.data.length === 0) {
+        tbody.innerHTML =
+          '<tr><td colspan="12" style="text-align: center;">No hay registros guardados en este rango aún.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = res.data.map(r => {
+
+        if (String(r.tipo) === '102') {
+          return `
+            <tr>
+              <td><b>${r.codigo}</b></td>
+              <td>-</td>
+              <td>${r.codigoCompleto || '-'}</td>
+              <td>${r.producto || '-'}</td>
+              <td>-</td>
+              <td>${r.lote || '-'}</td>
+              <td>${r.ubicacion || '-'}</td>
+              <td>-</td>
+              <td>${r.pesoBruto !== '' && r.pesoBruto != null ? r.pesoBruto : '0'}</td>
+              <td>${r.tara !== '' && r.tara != null ? r.tara : '0'}</td>
+              <td>${r.pesoNeto !== '' && r.pesoNeto != null ? r.pesoNeto : '0'}</td>
+              <td>${r.observacion || '-'}</td>
+            </tr>
+          `;
         }
-        
-        tbody.innerHTML = res.data.map(r => `
+
+        if (String(r.tipo) === '106') {
+          return `
+            <tr>
+              <td><b>${r.codigo}</b></td>
+              <td>-</td>
+              <td>${r.codigoCompleto || '-'}</td>
+              <td>${r.producto || '-'}</td>
+              <td>-</td>
+              <td>-</td>
+              <td>${r.ubicacion || '-'}</td>
+              <td>-</td>
+              <td>${r.pesoBruto !== '' && r.pesoBruto != null ? r.pesoBruto : '0'}</td>
+              <td>${r.tara !== '' && r.tara != null ? r.tara : '0'}</td>
+              <td>${r.pesoNeto !== '' && r.pesoNeto != null ? r.pesoNeto : '0'}</td>
+              <td>${r.observacion || '-'}</td>
+            </tr>
+          `;
+        }
+
+        return `
           <tr>
             <td><b>${r.codigo}</b></td>
             <td>${r.ofs || '-'}</td>
-            <td>${r.codigoCompleto}</td>
-            <td>${r.producto}</td>
+            <td>${r.codigoCompleto || '-'}</td>
+            <td>${r.producto || '-'}</td>
             <td>${r.proceso || '-'}</td>
             <td>${r.lote || '-'}</td>
             <td>${r.ubicacion || '-'}</td>
-            <td>${r.longitud || '-'}</td>
-            <td>${r.pesoBruto || '0'}</td>
-            <td>${r.tara || '0'}</td>
-            <td>${r.pesoNeto || '0'}</td>
+            <td>${r.longitud !== '' && r.longitud != null ? r.longitud : '-'}</td>
+            <td>${r.pesoBruto !== '' && r.pesoBruto != null ? r.pesoBruto : '0'}</td>
+            <td>${r.tara !== '' && r.tara != null ? r.tara : '0'}</td>
+            <td>${r.pesoNeto !== '' && r.pesoNeto != null ? r.pesoNeto : '0'}</td>
             <td>${r.observacion || '-'}</td>
           </tr>
-        `).join('');
-      } else {
-        tbody.innerHTML = '<tr><td colspan="12" style="text-align: center; color: red;">Error al cargar los datos.</td></tr>';
-      }
-    } catch (err) {
-      tbody.innerHTML = `<tr><td colspan="12" style="text-align: center; color: red;">Error: ${err.message}</td></tr>`;
+        `;
+      }).join('');
+
+    } else {
+      tbody.innerHTML =
+        '<tr><td colspan="12" style="text-align: center; color: red;">Error al cargar los datos.</td></tr>';
     }
+
+  } catch (err) {
+    tbody.innerHTML =
+      `<tr><td colspan="12" style="text-align: center; color: red;">Error: ${err.message}</td></tr>`;
   }
+}
 
   function _parseNum(v) {
     if (v === '' || v === null || v === undefined) return '';
